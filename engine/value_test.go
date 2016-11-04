@@ -7,12 +7,8 @@ package engine
 import (
 	"reflect"
 	"testing"
+	"os"
 )
-
-func TestValueStart(t *testing.T) {
-	e, _ = New()
-	t.SkipNow()
-}
 
 var valueNewTests = []struct {
 	value    interface{}
@@ -33,6 +29,10 @@ var valueNewTests = []struct {
 	{
 		true,
 		true,
+	},
+	{
+		false,
+		false,
 	},
 	{
 		"Hello World",
@@ -66,7 +66,7 @@ var valueNewTests = []struct {
 }
 
 func TestValueNew(t *testing.T) {
-	e, _ = New()
+	e, _ := New()
 	defer e.Destroy()
 	c, _ := e.NewContext()
 
@@ -95,15 +95,14 @@ func TestValueNew(t *testing.T) {
 }
 
 func TestCopy(t *testing.T) {
-	e, _ = New()
+	e, _ := New()
 	defer e.Destroy()
 	c, _ := e.NewContext()
 	defer c.Destroy()
-	val, _ := NewValue(struct {
-		I string
-	}{"hello"})
-	//fmt.Println(val.Interface())
-	val.Destroy()
+	c.Output = os.Stdout
+	c.Bind("a", map[int]interface{}{10: "this"})
+	val, _ := c.Eval("var_dump($a); return $a;")
+	defer val.Destroy()
 }
 
 var valueNewInvalidTests = []interface{}{
@@ -119,6 +118,8 @@ var valueNewInvalidTests = []interface{}{
 }
 
 func TestValueNewInvalid(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	c, _ := e.NewContext()
 
 	for _, value := range valueNewInvalidTests {
@@ -138,23 +139,27 @@ var valueKindTests = []struct {
 }{
 	{
 		42,
-		Long,
+		IS_LONG,
 	},
 	{
 		3.14159,
-		Double,
+		IS_DOUBLE,
 	},
 	{
 		true,
-		Bool,
+		IS_TRUE,
+	},
+	{
+		false,
+		IS_FALSE,
 	},
 	{
 		"Hello World",
-		String,
+		IS_STRING,
 	},
 	{
 		[]string{"Knick", "Knack"},
-		Array,
+		IS_ARRAY,
 	},
 	{
 		map[string]int{"t": 1, "c": 2},
@@ -165,11 +170,13 @@ var valueKindTests = []struct {
 			I int
 			S string
 		}{66, "wow"},
-		Object,
+		IS_OBJECT,
 	},
 }
 
 func TestValueKind(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	c, _ := e.NewContext()
 
 	for _, tt := range valueKindTests {
@@ -229,6 +236,8 @@ var valueIntTests = []struct {
 }
 
 func TestValueInt(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	c, _ := e.NewContext()
 
 	for _, tt := range valueIntTests {
@@ -288,6 +297,8 @@ var valueFloatTests = []struct {
 }
 
 func TestValueFloat(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	c, _ := e.NewContext()
 
 	for _, tt := range valueFloatTests {
@@ -347,6 +358,8 @@ var valueBoolTests = []struct {
 }
 
 func TestValueBool(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	c, _ := e.NewContext()
 
 	for _, tt := range valueBoolTests {
@@ -406,6 +419,8 @@ var valueStringTests = []struct {
 }
 
 func TestValueString(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	c, _ := e.NewContext()
 
 	for _, tt := range valueStringTests {
@@ -465,6 +480,8 @@ var valueSliceTests = []struct {
 }
 
 func TestValueSlice(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	c, _ := e.NewContext()
 
 	for _, tt := range valueSliceTests {
@@ -524,6 +541,8 @@ var valueMapTests = []struct {
 }
 
 func TestValueMap(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	c, _ := e.NewContext()
 
 	for _, tt := range valueMapTests {
@@ -546,6 +565,8 @@ func TestValueMap(t *testing.T) {
 }
 
 func TestValuePtr(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	c, _ := e.NewContext()
 	defer c.Destroy()
 
@@ -560,6 +581,8 @@ func TestValuePtr(t *testing.T) {
 }
 
 func TestValueDestroy(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	c, _ := e.NewContext()
 	defer c.Destroy()
 
@@ -576,9 +599,4 @@ func TestValueDestroy(t *testing.T) {
 
 	// Attempting to destroy a value twice should be a no-op.
 	val.Destroy()
-}
-
-func TestValueEnd(t *testing.T) {
-	e.Destroy()
-	t.SkipNow()
 }

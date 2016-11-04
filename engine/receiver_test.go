@@ -9,11 +9,6 @@ import (
 	"testing"
 )
 
-func TestReceiverStart(t *testing.T) {
-	e, _ = New()
-	t.SkipNow()
-}
-
 type testReceiver struct {
 	Var    string
 	hidden int64
@@ -120,6 +115,8 @@ var receiverDefineTests = []struct {
 }
 
 func TestReceiverDefine(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	var w bytes.Buffer
 
 	c, _ := e.NewContext()
@@ -153,6 +150,8 @@ func TestReceiverDefine(t *testing.T) {
 }
 
 func TestReceiverDestroy(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	c, _ := e.NewContext()
 	defer c.Destroy()
 
@@ -168,9 +167,4 @@ func TestReceiverDestroy(t *testing.T) {
 
 	// Attempting to destroy a receiver twice should be a no-op.
 	r.Destroy()
-}
-
-func TestReceiverEnd(t *testing.T) {
-	e.Destroy()
-	t.SkipNow()
 }

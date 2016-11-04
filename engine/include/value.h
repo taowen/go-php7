@@ -50,6 +50,7 @@ void value_array_reset(zval *arr);
 zval value_array_next_get(zval *arr);
 zval value_array_index_get(zval *arr, unsigned long idx);
 zval value_array_key_get(zval *arr, char *key);
+bool value_array_is_associative(zval *src);
 
 #include "_value.h"
 

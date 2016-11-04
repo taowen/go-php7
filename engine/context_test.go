@@ -13,12 +13,9 @@ import (
 	"testing"
 )
 
-func TestContextStart(t *testing.T) {
-	e, _ = New()
-	t.SkipNow()
-}
-
 func TestContextNew(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	c, err := e.NewContext()
 	if err != nil {
 		t.Fatalf("NewContext(): %s", err)
@@ -49,6 +46,8 @@ var execTests = []struct {
 }
 
 func TestContextExec(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	var w bytes.Buffer
 
 	c, _ := e.NewContext()
@@ -97,6 +96,8 @@ var evalTests = []struct {
 }
 
 func TestContextEval(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	var w bytes.Buffer
 
 	c, _ := e.NewContext()
@@ -151,6 +152,8 @@ var headerTests = []struct {
 }
 
 func TestContextHeader(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	c, _ := e.NewContext()
 
 	for _, tt := range headerTests {
@@ -186,6 +189,8 @@ var logTests = []struct {
 }
 
 func TestContextLog(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	var w bytes.Buffer
 
 	c, _ := e.NewContext()
@@ -256,6 +261,8 @@ var bindTests = []struct {
 }
 
 func TestContextBind(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	var w bytes.Buffer
 
 	c, _ := e.NewContext()
@@ -284,6 +291,8 @@ func TestContextBind(t *testing.T) {
 }
 
 func TestContextDestroy(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	c, _ := e.NewContext()
 	c.Destroy()
 
@@ -295,7 +304,3 @@ func TestContextDestroy(t *testing.T) {
 	c.Destroy()
 }
 
-func TestContextEnd(t *testing.T) {
-	e.Destroy()
-	t.SkipNow()
-}

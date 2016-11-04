@@ -48,7 +48,6 @@ func (c *Context) Bind(name string, val interface{}) error {
 	defer C.free(unsafe.Pointer(n))
 
 	C.context_bind(c.context, n, v.Ptr())
-	c.values = append(c.values, v)
 
 	return nil
 }

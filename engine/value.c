@@ -61,6 +61,33 @@ void value_set_object(zval *val) {
 	object_init(val);
 }
 
+bool value_array_is_associative(zval *src) {
+	HashTable *h = (Z_ARRVAL_P(src));
+
+	// Determine if array is associative or indexed. In the simplest case, a
+	// associative array will have different values for the number of elements
+	// and the index of the next free element. In cases where the number of
+	// elements and the next free index is equal, we must iterate through
+	// the hash table and check the keys themselves.
+	if (h->nNumOfElements != h->nNextFreeElement) {
+		return true;
+	}
+
+	unsigned long i = 0;
+
+	for (zend_hash_internal_pointer_reset(h); i < h->nNumOfElements; i++) {
+		unsigned long index;
+		int type = _value_current_key_get(h, NULL, &index);
+
+		if (type == HASH_KEY_IS_STRING || index != i) {
+			return true;
+		}
+
+		zend_hash_move_forward(h);
+	}
+	return false;
+}
+
 // Set type and value from zval. The source zval is copied and is otherwise not
 // affected.
 void value_set_zval(zval *val, zval *src) {
@@ -130,15 +157,15 @@ void value_set_zval(zval *val, zval *src) {
 
 // Set next index of array or map value.
 void value_array_next_set(zval *arr, zval *val) {
-	add_next_index_zval(arr, val);
+	zend_hash_next_index_insert(Z_ARRVAL_P(arr), val);
 }
 
 void value_array_index_set(zval *arr, unsigned long idx, zval *val) {
-	add_index_zval(arr, idx, val);
+	zend_hash_index_update(Z_ARRVAL_P(arr), idx, val);
 }
 
 void value_array_key_set(zval *arr, const char *key, zval *val) {
-	add_assoc_zval(arr, key, val);
+	zend_hash_str_update(Z_ARRVAL_P(arr), key, strlen(key), val);
 }
 
 void value_object_property_set(zval *obj, const char *key, zval *val) {
@@ -311,7 +338,7 @@ zval value_array_index_get(zval *arr, unsigned long idx) {
 	HashTable *ht = NULL;
 	zval val = value_new();
 
-	switch (Z_TYPE(val)) {
+	switch (Z_TYPE_P(arr)) {
 	case IS_ARRAY:
 		ht = Z_ARRVAL_P(arr);
 		break;

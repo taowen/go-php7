@@ -35,9 +35,9 @@ func (s *Script) Remove() {
 	os.Remove(s.Name())
 }
 
-var e *Engine
-
 func TestEngineNew(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	var err error
 
 	if e, err = New(); err != nil {
@@ -50,6 +50,8 @@ func TestEngineNew(t *testing.T) {
 }
 
 func TestEngineNewContext(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	_, err := e.NewContext()
 	if err != nil {
 		t.Errorf("NewContext(): %s", err)
@@ -61,6 +63,8 @@ func TestEngineNewContext(t *testing.T) {
 }
 
 func TestEngineDefine(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	ctor := func(args []interface{}) interface{} {
 		return nil
 	}
@@ -79,6 +83,8 @@ func TestEngineDefine(t *testing.T) {
 }
 
 func TestEngineDestroy(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
 	e.Destroy()
 
 	if e.engine != nil || e.contexts != nil || e.receivers != nil {

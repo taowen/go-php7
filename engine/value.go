@@ -25,14 +25,18 @@ type ValueKind int
 
 // PHP types representable in Go.
 const (
-	Null ValueKind = 1
-	Long = 4
-	Double = 5
-	Bool = 2
-	String = 6
-	Array = 7
-	Map = 9
-	Object = 8
+	IS_UNDEF ValueKind = 0
+	IS_NULL ValueKind = 1
+	IS_FALSE ValueKind = 2
+	IS_TRUE ValueKind = 3
+	IS_LONG ValueKind = 4
+	IS_DOUBLE ValueKind = 5
+	IS_STRING ValueKind = 6
+	IS_ARRAY ValueKind = 7
+	IS_OBJECT ValueKind = 8
+	IS_RESOURCE ValueKind = 9
+	IS_REFERENCE ValueKind = 10
+	Map =11
 )
 
 // Value represents a PHP value.
@@ -113,7 +117,6 @@ func NewValue(val interface{}) (*Value, error) {
 				} else {
 					str := C.CString(key.String())
 					defer C.free(unsafe.Pointer(str))
-
 					C.value_array_key_set(ptr, str, kv.value)
 				}
 			}
@@ -180,17 +183,23 @@ func (v *Value) Kind() ValueKind {
 // Interface returns the internal PHP value as it lies, with no conversion step.
 func (v *Value) Interface() interface{} {
 	switch v.Kind() {
-	case Long:
+	case IS_LONG:
 		return v.Int()
-	case Double:
+	case IS_DOUBLE:
 		return v.Float()
-	case Bool:
-		return v.Bool()
-	case String:
+	case IS_TRUE:
+		return true
+	case IS_FALSE:
+		return false
+	case IS_STRING:
 		return v.String()
-	case Array:
-		return v.Slice()
-	case Map, Object:
+	case IS_ARRAY:
+		if C.value_array_is_associative(v.value) {
+			return v.Map()
+		} else {
+			return v.Slice()
+		}
+	case IS_OBJECT:
 		return v.Map()
 	}
 
@@ -247,7 +256,7 @@ func (v *Value) Map() map[string]interface{} {
 	val := make(map[string]interface{})
 	zval := C.value_array_keys(v.value)
 	keys := &Value{value: &zval}
-
+	fmt.Println(reflect.TypeOf(keys.Slice()[0]))
 	for _, k := range keys.Slice() {
 		switch key := k.(type) {
 		case int64:
