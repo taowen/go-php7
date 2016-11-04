@@ -151,7 +151,7 @@ func NewValue(val interface{}) (*C.struct__zval_struct, error) {
 }
 
 func IsNull(zval *C.struct__zval_struct) bool {
-	return GetKind(zval) == IS_NULL
+	return zval == nil || GetKind(zval) == IS_NULL
 }
 
 // Kind returns the Value's concrete kind of type.

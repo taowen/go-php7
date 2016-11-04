@@ -209,18 +209,20 @@ func engineReceiverNew(rcvr *C.struct__engine_receiver, args *C.struct__zval_str
 }
 
 //export engineReceiverGet
-func engineReceiverGet(rcvr *C.struct__engine_receiver, name *C.char) *C.struct__zval_struct {
+func engineReceiverGet(rcvr *C.struct__engine_receiver, name *C.char) C.struct__zval_struct {
 	n := C.GoString(C._receiver_get_name(rcvr))
 	if engine == nil || engine.receivers[n].objects[rcvr] == nil {
-		return nil
+		zvalNull, _:= NewValue(nil)
+		return *zvalNull
 	}
 
 	val, err := engine.receivers[n].objects[rcvr].Get(C.GoString(name))
 	if err != nil {
-		return nil
+		zvalNull, _:= NewValue(nil)
+		return *zvalNull
 	}
 
-	return val
+	return *val
 }
 
 //export engineReceiverSet
@@ -248,16 +250,19 @@ func engineReceiverExists(rcvr *C.struct__engine_receiver, name *C.char) C.int {
 }
 
 //export engineReceiverCall
-func engineReceiverCall(rcvr *C.struct__engine_receiver, name *C.char, args *C.struct__zval_struct) *C.struct__zval_struct {
+func engineReceiverCall(rcvr *C.struct__engine_receiver, name *C.char, args *C.struct__zval_struct) C.struct__zval_struct {
 	n := C.GoString(C._receiver_get_name(rcvr))
 	if engine == nil || engine.receivers[n].objects[rcvr] == nil {
-		return nil
+		zvalNull, _:= NewValue(nil)
+		return *zvalNull
 	}
 
 	val := engine.receivers[n].objects[rcvr].Call(C.GoString(name), ToSlice(args))
-	if IsNull(val) {
-		return nil
+
+	if val == nil {
+		zvalNull, _:= NewValue(nil)
+		return *zvalNull
 	}
 
-	return val
+	return *val
 }

@@ -116,10 +116,10 @@ var receiverDefineTests = []struct {
 
 func TestReceiverDefine(t *testing.T) {
 	e, _ := New()
-	defer e.Destroy()
 	var w bytes.Buffer
 
 	c, _ := e.NewContext()
+	defer c.Destroy()
 	c.Output = &w
 
 	if err := e.Define("TestReceiver", newTestReceiver); err != nil {
@@ -145,8 +145,7 @@ func TestReceiverDefine(t *testing.T) {
 			t.Errorf("Context.Eval('%s'): Expected output '%s', actual '%s'", tt.script, tt.expected, actual)
 		}
 	}
-
-	c.Destroy()
+	e.Destroy()
 }
 
 func TestReceiverDestroy(t *testing.T) {

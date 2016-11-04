@@ -23,7 +23,6 @@ const char engine_ini_defaults[] = {
 	"implicit_flush = 1\n"
 	"output_buffering = 0\n"
 	"max_execution_time = 0\n"
-	"zend.enable_gc = 0\n"
 	"max_input_time = -1\n\0"
 };
 
