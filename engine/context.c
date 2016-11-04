@@ -91,9 +91,8 @@ zval context_eval(engine_context *context, char *script) {
 	return result;
 }
 
-void context_bind(engine_context *context, char *name, void *value) {
-	zval *v = (zval *) value;
-	_context_bind(name, v);
+void context_bind(engine_context *context, char *name, zval *value) {
+	_context_bind(name, value);
 }
 
 void context_destroy(engine_context *context) {

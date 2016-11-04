@@ -213,7 +213,7 @@ func engineReceiverNew(rcvr *C.struct__engine_receiver, args unsafe.Pointer) C.i
 }
 
 //export engineReceiverGet
-func engineReceiverGet(rcvr *C.struct__engine_receiver, name *C.char) unsafe.Pointer {
+func engineReceiverGet(rcvr *C.struct__engine_receiver, name *C.char) *C.struct__zval_struct {
 	n := C.GoString(C._receiver_get_name(rcvr))
 	if engine == nil || engine.receivers[n].objects[rcvr] == nil {
 		return nil
@@ -257,7 +257,7 @@ func engineReceiverExists(rcvr *C.struct__engine_receiver, name *C.char) C.int {
 }
 
 //export engineReceiverCall
-func engineReceiverCall(rcvr *C.struct__engine_receiver, name *C.char, args unsafe.Pointer) unsafe.Pointer {
+func engineReceiverCall(rcvr *C.struct__engine_receiver, name *C.char, args unsafe.Pointer) *C.struct__zval_struct {
 	n := C.GoString(C._receiver_get_name(rcvr))
 	if engine == nil || engine.receivers[n].objects[rcvr] == nil {
 		return nil

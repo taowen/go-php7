@@ -78,7 +78,7 @@ func (c *Context) Eval(script string) (Value, error) {
 		return Value{}, fmt.Errorf("Error executing script '%s' in context", script)
 	}
 
-	return Value{&result}, nil
+	return Value(result), nil
 }
 
 // Destroy tears down the current execution context along with any active value

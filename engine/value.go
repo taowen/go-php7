@@ -40,9 +40,7 @@ const (
 )
 
 // Value represents a PHP value.
-type Value struct {
-	value *C.struct__zval_struct
-}
+type Value C.struct__zval_struct
 
  //NewValue creates a PHP value representation of a Go value val. Available
  //bindings for Go to PHP types are:
@@ -63,7 +61,7 @@ func NewValue(val interface{}) (Value, error) {
 	zval, err := C.value_new()
 	ptr := &zval
 	if err != nil {
-		return Value{value: ptr}, fmt.Errorf("Unable to instantiate PHP value")
+		return Value(zval), fmt.Errorf("Unable to instantiate PHP value")
 	}
 
 	v := reflect.ValueOf(val)
@@ -96,7 +94,7 @@ func NewValue(val interface{}) (Value, error) {
 				return Value{}, err
 			}
 
-			C.value_array_next_set(ptr, vs.value)
+			C.value_array_next_set(ptr, vs.Ptr())
 		}
 	// Bind map (with integer or string keys) to PHP associative array type.
 	case reflect.Map:
@@ -113,11 +111,11 @@ func NewValue(val interface{}) (Value, error) {
 				}
 
 				if kt == reflect.Int {
-					C.value_array_index_set(ptr, C.ulong(key.Int()), kv.value)
+					C.value_array_index_set(ptr, C.ulong(key.Int()), kv.Ptr())
 				} else {
 					str := C.CString(key.String())
 					defer C.free(unsafe.Pointer(str))
-					C.value_array_key_set(ptr, str, kv.value)
+					C.value_array_key_set(ptr, str, kv.Ptr())
 				}
 			}
 		} else {
@@ -144,16 +142,16 @@ func NewValue(val interface{}) (Value, error) {
 			str := C.CString(vt.Field(i).Name)
 			defer C.free(unsafe.Pointer(str))
 
-			C.value_object_property_set(ptr, str, fv.value)
+			C.value_object_property_set(ptr, str, fv.Ptr())
 		}
 	case reflect.Invalid:
 		C.value_set_null(ptr)
 	default:
 		C._value_destroy(ptr)
-		return Value{value: ptr}, fmt.Errorf("Unable to create value of unknown type '%T'", val)
+		return Value{}, fmt.Errorf("Unable to create value of unknown type '%T'", val)
 	}
 
-	return Value{value: ptr}, nil
+	return Value(zval), nil
 }
 
 // NewValueFromPtr creates a Value type from an existing PHP value pointer.
@@ -163,25 +161,24 @@ func NewValueFromPtr(val unsafe.Pointer) (Value, error) {
 	}
 
 	zval, err := C.value_new()
-	ptr := &zval
 	if err != nil {
 		return Value{}, fmt.Errorf("Unable to create new PHP value")
 	}
 
-	if _, err := C.value_set_zval(ptr, (*C.zval)(val)); err != nil {
+	if _, err := C.value_set_zval(&zval, (*C.zval)(val)); err != nil {
 		return Value{}, fmt.Errorf("Unable to set PHP value from pointer")
 	}
 
-	return Value{value: ptr}, nil
+	return Value(zval), nil
 }
 
 func (v Value) IsNull() bool {
-	return v.value == nil || v.Kind() == IS_NULL
+	return v.Kind() == IS_NULL
 }
 
 // Kind returns the Value's concrete kind of type.
 func (v Value) Kind() ValueKind {
-	return (ValueKind)(C.value_kind(v.value))
+	return (ValueKind)(C.value_kind(v.Ptr()))
 }
 
 // Interface returns the internal PHP value as it lies, with no conversion step.
@@ -198,7 +195,7 @@ func (v Value) Interface() interface{} {
 	case IS_STRING:
 		return v.String()
 	case IS_ARRAY:
-		if C.value_array_is_associative(v.value) {
+		if C.value_array_is_associative(v.Ptr()) {
 			return v.Map()
 		} else {
 			return v.Slice()
@@ -212,23 +209,23 @@ func (v Value) Interface() interface{} {
 
 // Int returns the internal PHP value as an integer, converting if necessary.
 func (v Value) Int() int64 {
-	return (int64)(C.value_get_long(v.value))
+	return (int64)(C.value_get_long(v.Ptr()))
 }
 
 // Float returns the internal PHP value as a floating point number, converting
 // if necessary.
 func (v Value) Float() float64 {
-	return (float64)(C.value_get_double(v.value))
+	return (float64)(C.value_get_double(v.Ptr()))
 }
 
 // Bool returns the internal PHP value as a boolean, converting if necessary.
 func (v Value) Bool() bool {
-	return (bool)(C.value_get_bool(v.value))
+	return (bool)(C.value_get_bool(v.Ptr()))
 }
 
 // String returns the internal PHP value as a string, converting if necessary.
 func (v Value) String() string {
-	str := C.value_get_string(v.value)
+	str := C.value_get_string(v.Ptr())
 	defer C.free(unsafe.Pointer(str))
 
 	return C.GoString(str)
@@ -237,14 +234,14 @@ func (v Value) String() string {
 // Slice returns the internal PHP value as a slice of interface types. Non-array
 // values are implicitly converted to single-element slices.
 func (v Value) Slice() []interface{} {
-	size := (int)(C.value_array_size(v.value))
+	size := (int)(C.value_array_size(v.Ptr()))
 	val := make([]interface{}, size)
 
-	C.value_array_reset(v.value)
+	C.value_array_reset(v.Ptr())
 
 	for i := 0; i < size; i++ {
-		zval := C.value_array_next_get(v.value)
-		t := &Value{value: &zval}
+		zval := C.value_array_next_get(v.Ptr())
+		t := Value(zval)
 
 		val[i] = t.Interface()
 		t.Destroy()
@@ -258,22 +255,22 @@ func (v Value) Slice() []interface{} {
 // with a key of '0'.
 func (v Value) Map() map[string]interface{} {
 	val := make(map[string]interface{})
-	zval := C.value_array_keys(v.value)
-	keys := &Value{value: &zval}
+	zval := C.value_array_keys(v.Ptr())
+	keys := Value(zval)
 	fmt.Println(reflect.TypeOf(keys.Slice()[0]))
 	for _, k := range keys.Slice() {
 		switch key := k.(type) {
 		case int64:
-			zval := C.value_array_index_get(v.value, C.ulong(key))
-			t := &Value{value: &zval}
+			zval := C.value_array_index_get(v.Ptr(), C.ulong(key))
+			t := Value(zval)
 			sk := strconv.Itoa((int)(key))
 
 			val[sk] = t.Interface()
 			t.Destroy()
 		case string:
 			str := C.CString(key)
-			zval := C.value_array_key_get(v.value, str)
-			t := &Value{value: &zval}
+			zval := C.value_array_key_get(v.Ptr(), str)
+			t := Value(zval)
 			C.free(unsafe.Pointer(str))
 
 			val[key] = t.Interface()
@@ -287,17 +284,13 @@ func (v Value) Map() map[string]interface{} {
 
 // Ptr returns a pointer to the internal PHP value, and is mostly used for
 // passing to C functions.
-func (v Value) Ptr() unsafe.Pointer {
-	return unsafe.Pointer(v.value)
+func (v *Value) Ptr() *C.struct__zval_struct {
+	zval := C.struct__zval_struct(*v)
+	return &zval
 }
 
 // Destroy removes all active references to the internal PHP value and frees
 // any resources used.
 func (v Value) Destroy() {
-	if v.value == nil {
-		return
-	}
-
-	C._value_destroy(v.value)
-	v.value = nil
+	C._value_destroy(v.Ptr())
 }

@@ -593,7 +593,7 @@ func TestValueDestroy(t *testing.T) {
 
 	val.Destroy()
 
-	if val.value != nil {
+	if !val.IsNull() {
 		t.Errorf("Value.Destroy(): Did not set internal fields to `nil`")
 	}
 
