@@ -14,7 +14,7 @@
 #include "_cgo_export.h"
 
 // Fetch and return field for method receiver.
-static engine_value *receiver_get(zval *object, zval *member) {
+static zval *receiver_get(zval *object, zval *member) {
 	engine_receiver *this = _receiver_this(object);
 	return engineReceiverGet(this, Z_STRVAL_P(member));
 }
@@ -38,15 +38,15 @@ static int receiver_exists(zval *object, zval *member, int check) {
 	}
 
 	int result = 0;
-	engine_value *val = engineReceiverGet(this, Z_STRVAL_P(member));
+	zval *val = engineReceiverGet(this, Z_STRVAL_P(member));
 
 	if (check == 1) {
 		// Value exists and is "truthy".
-		convert_to_boolean(val->internal);
-		result = _value_truth(val->internal);
+		convert_to_boolean(val);
+		result = _value_truth(val);
 	} else if (check == 0) {
 		// Value exists and is not null.
-		result = (val->kind != KIND_NULL) ? 1 : 0;
+		result = Z_ISNULL_P(val) ? 0 : 1;
 	} else {
 		// Check value is invalid.
 		result = 0;
@@ -66,11 +66,11 @@ static int receiver_method_call(char *name, INTERNAL_FUNCTION_PARAMETERS) {
 	if (zend_copy_parameters_array(ZEND_NUM_ARGS(), &args) == FAILURE) {
 		RETVAL_NULL();
 	} else {
-		engine_value *result = engineReceiverCall(this, name, (void *) &args);
+		zval *result = engineReceiverCall(this, name, (void *) &args);
 		if (result == NULL) {
 			RETVAL_NULL();
 		} else {
-			value_copy(return_value, result->internal);
+			value_copy(return_value, result);
 			_value_destroy(result);
 		}
 	}
@@ -88,7 +88,7 @@ static void receiver_new(INTERNAL_FUNCTION_PARAMETERS) {
 
 	if (zend_copy_parameters_array(ZEND_NUM_ARGS(), &args) == FAILURE) {
 		zend_throw_exception(NULL, "Could not parse parameters for method receiver", 0);
-	} else {	
+	} else {
 		// Create receiver instance. Throws an exception if creation fails.
 		int result = engineReceiverNew(this, (void *) &args);
 		if (result != 0) {

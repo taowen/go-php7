@@ -9,18 +9,8 @@
 #include "value.h"
 
 // Creates a new value and initializes type to null.
-engine_value *value_new() {
-	engine_value *val = emalloc(sizeof(engine_value));
-	if (val == NULL) {
-		errno = 1;
-		return NULL;
-	}
-
-	val->internal = _value_init();
-	val->kind = KIND_NULL;
-
-	errno = 0;
-	return val;
+zval value_new() {
+	return _value_init();
 }
 
 // Creates a complete copy of a zval.
@@ -32,55 +22,48 @@ void value_copy(zval *dst, zval *src) {
 
 // Returns engine value type. Usually compared against KIND_* constants, defined
 // in the `value.h` header file.
-int value_kind(engine_value *val) {
-	return val->kind;
+int value_kind(zval *val) {
+	return Z_TYPE((*val));
 }
 
 // Set type and value to null.
-void value_set_null(engine_value *val) {
-	ZVAL_NULL(val->internal);
-	val->kind = KIND_NULL;
+void value_set_null(zval *val) {
+	ZVAL_NULL(val);
 }
 
 // Set type and value to integer.
-void value_set_long(engine_value *val, long int num) {
-	ZVAL_LONG(val->internal, num);
-	val->kind = KIND_LONG;
+void value_set_long(zval *val, long int num) {
+	ZVAL_LONG(val, num);
 }
 
 // Set type and value to floating point.
-void value_set_double(engine_value *val, double num) {
-	ZVAL_DOUBLE(val->internal, num);
-	val->kind = KIND_DOUBLE;
+void value_set_double(zval *val, double num) {
+	ZVAL_DOUBLE(val, num);
 }
 
 // Set type and value to boolean.
-void value_set_bool(engine_value *val, bool status) {
-	ZVAL_BOOL(val->internal, status);
-	val->kind = KIND_BOOL;
+void value_set_bool(zval *val, bool status) {
+	ZVAL_BOOL(val, status);
 }
 
 // Set type and value to string.
-void value_set_string(engine_value *val, char *str) {
-	_value_set_string(&val->internal, str);
-	val->kind = KIND_STRING;
+void value_set_string(zval *val, char *str) {
+	_value_set_string(val, str);
 }
 
 // Set type and value to array with a preset initial size.
-void value_set_array(engine_value *val, unsigned int size) {
-	array_init_size(val->internal, size);
-	val->kind = KIND_ARRAY;
+void value_set_array(zval *val, unsigned int size) {
+	array_init_size(val, size);
 }
 
 // Set type and value to object.
-void value_set_object(engine_value *val) {
-	object_init(val->internal);
-	val->kind = KIND_OBJECT;
+void value_set_object(zval *val) {
+	object_init(val);
 }
 
 // Set type and value from zval. The source zval is copied and is otherwise not
 // affected.
-void value_set_zval(engine_value *val, zval *src) {
+void value_set_zval(zval *val, zval *src) {
 	int kind;
 
 	// Determine concrete type from source zval.
@@ -140,93 +123,87 @@ void value_set_zval(engine_value *val, zval *src) {
 		return;
 	}
 
-	value_copy(val->internal, src);
-	val->kind = kind;
+	value_copy(val, src);
 
 	errno = 0;
 }
 
 // Set next index of array or map value.
-void value_array_next_set(engine_value *arr, engine_value *val) {
-	Z_TRY_ADDREF_P(val->internal);
-	add_next_index_zval(arr->internal, val->internal);
+void value_array_next_set(zval *arr, zval *val) {
+	add_next_index_zval(arr, val);
 }
 
-void value_array_index_set(engine_value *arr, unsigned long idx, engine_value *val) {
-	Z_TRY_ADDREF_P(val->internal);
-	add_index_zval(arr->internal, idx, val->internal);
-	arr->kind = KIND_MAP;
+void value_array_index_set(zval *arr, unsigned long idx, zval *val) {
+	add_index_zval(arr, idx, val);
 }
 
-void value_array_key_set(engine_value *arr, const char *key, engine_value *val) {
-	Z_TRY_ADDREF_P(val->internal);
-	add_assoc_zval(arr->internal, key, val->internal);
-	arr->kind = KIND_MAP;
+void value_array_key_set(zval *arr, const char *key, zval *val) {
+	add_assoc_zval(arr, key, val);
 }
 
-void value_object_property_set(engine_value *obj, const char *key, engine_value *val) {
-	add_property_zval(obj->internal, key, val->internal);
+void value_object_property_set(zval *obj, const char *key, zval *val) {
+	add_property_zval(obj, key, val);
 }
 
-int value_get_long(engine_value *val) {
+int value_get_long(zval *val) {
 	zval tmp;
 
 	// Return value directly if already in correct type.
-	if (val->kind == KIND_LONG) {
-		return Z_LVAL_P(val->internal);
+	if (Z_TYPE_P(val) == IS_LONG) {
+		return Z_LVAL_P(val);
 	}
 
-	value_copy(&tmp, val->internal);
+	value_copy(&tmp, val);
 	convert_to_long(&tmp);
 
 	return Z_LVAL(tmp);
 }
 
-double value_get_double(engine_value *val) {
+double value_get_double(zval *val) {
 	zval tmp;
 
 	// Return value directly if already in correct type.
-	if (val->kind == KIND_DOUBLE) {
-		return Z_DVAL_P(val->internal);
+	if (Z_TYPE_P(val) == IS_DOUBLE) {
+		return Z_DVAL_P(val);
 	}
 
-	value_copy(&tmp, val->internal);
+	value_copy(&tmp, val);
 	convert_to_double(&tmp);
 
 	return Z_DVAL(tmp);
 }
 
-bool value_get_bool(engine_value *val) {
+bool value_get_bool(zval *val) {
 	zval tmp;
 
 	// Return value directly if already in correct type.
-	if (val->kind == KIND_BOOL) {
-		return _value_truth(val->internal);
+	if (Z_TYPE_P(val) == IS_TRUE || Z_TYPE_P(val) == IS_FALSE) {
+		return _value_truth(val);
 	}
 
-	value_copy(&tmp, val->internal);
+	value_copy(&tmp, val);
 	convert_to_boolean(&tmp);
 
 	return _value_truth(&tmp);
 }
 
-char *value_get_string(engine_value *val) {
+char *value_get_string(zval *val) {
 	zval tmp;
 	int result;
 
-	switch (val->kind) {
-	case KIND_STRING:
-		value_copy(&tmp, val->internal);
+	switch (Z_TYPE_P(val)) {
+	case IS_STRING:
+		value_copy(&tmp, val);
 		break;
-	case KIND_OBJECT:
-		result = zend_std_cast_object_tostring(val->internal, &tmp, IS_STRING);
+	case IS_OBJECT:
+		result = zend_std_cast_object_tostring(val, &tmp, IS_STRING);
 		if (result == FAILURE) {
 			ZVAL_EMPTY_STRING(&tmp);
 		}
 
 		break;
 	default:
-		value_copy(&tmp, val->internal);
+		value_copy(&tmp, val);
 		convert_to_cstring(&tmp);
 	}
 
@@ -239,16 +216,15 @@ char *value_get_string(engine_value *val) {
 	return str;
 }
 
-unsigned int value_array_size(engine_value *arr) {
-	switch (arr->kind) {
-	case KIND_ARRAY:
-	case KIND_MAP:
-		return Z_ARRVAL_P(arr->internal)->nNumOfElements;
-	case KIND_OBJECT:
+unsigned int value_array_size(zval *arr) {
+	switch (Z_TYPE_P(arr)) {
+	case IS_ARRAY:
+		return Z_ARRVAL_P(arr)->nNumOfElements;
+	case IS_OBJECT:
 		// Object size is determined by the number of properties, regardless of
 		// visibility.
-		return Z_OBJPROP_P(arr->internal)->nNumOfElements;
-	case KIND_NULL:
+		return Z_OBJPROP_P(arr)->nNumOfElements;
+	case IS_NULL:
 		// Null values are considered empty.
 		return 0;
 	}
@@ -257,51 +233,49 @@ unsigned int value_array_size(engine_value *arr) {
 	return 1;
 }
 
-engine_value *value_array_keys(engine_value *arr) {
+zval value_array_keys(zval *arr) {
 	HashTable *h = NULL;
-	engine_value *keys = value_new();
+	zval keys = value_new();
 
-	value_set_array(keys, value_array_size(arr));
+	value_set_array(&keys, value_array_size(arr));
 
-	switch (arr->kind) {
-	case KIND_ARRAY:
-	case KIND_MAP:
-	case KIND_OBJECT:
-		if (arr->kind == KIND_OBJECT) {
-			h = Z_OBJPROP_P(arr->internal);
+	switch (Z_TYPE_P(arr)) {
+	case IS_ARRAY:
+	case IS_OBJECT:
+		if (Z_TYPE_P(arr) == IS_OBJECT) {
+			h = Z_OBJPROP_P(arr);
 		} else {
-			h = Z_ARRVAL_P(arr->internal);
+			h = Z_ARRVAL_P(arr);
 		}
 
 		unsigned long i = 0;
 
 		for (zend_hash_internal_pointer_reset(h); i < h->nNumOfElements; i++) {
-			_value_current_key_set(h, keys);
+			_value_current_key_set(h, &keys);
 			zend_hash_move_forward(h);
 		}
 
 		break;
-	case KIND_NULL:
+	case IS_NULL:
 		// Null values are considered empty.
 		break;
 	default:
 		// Non-array or object values are considered to contain a single key, '0'.
-		add_next_index_long(keys->internal, 0);
+		add_next_index_long(&keys, 0);
 	}
 
 	return keys;
 }
 
-void value_array_reset(engine_value *arr) {
+void value_array_reset(zval *arr) {
 	HashTable *h = NULL;
 
-	switch (arr->kind) {
-	case KIND_ARRAY:
-	case KIND_MAP:
-		h = Z_ARRVAL_P(arr->internal);
+	switch (Z_TYPE_P(arr)) {
+	case IS_ARRAY:
+		h = Z_ARRVAL_P(arr);
 		break;
-	case KIND_OBJECT:
-		h = Z_OBJPROP_P(arr->internal);
+	case IS_OBJECT:
+		h = Z_OBJPROP_P(arr);
 		break;
 	default:
 		return;
@@ -310,75 +284,72 @@ void value_array_reset(engine_value *arr) {
 	zend_hash_internal_pointer_reset(h);
 }
 
-engine_value *value_array_next_get(engine_value *arr) {
+zval value_array_next_get(zval *arr) {
 	HashTable *ht = NULL;
-	engine_value *val = value_new();
+	zval val = value_new();
 
-	switch (arr->kind) {
-	case KIND_ARRAY:
-	case KIND_MAP:
-		ht = Z_ARRVAL_P(arr->internal);
+	switch (Z_TYPE_P(arr)) {
+	case IS_ARRAY:
+		ht = Z_ARRVAL_P(arr);
 		break;
-	case KIND_OBJECT:
-		ht = Z_OBJPROP_P(arr->internal);
+	case IS_OBJECT:
+		ht = Z_OBJPROP_P(arr);
 		break;
 	default:
 		// Attempting to return the next index of a non-array value will return
 		// the value itself, allowing for implicit conversions of scalar values
 		// to arrays.
-		value_set_zval(val, arr->internal);
+		value_set_zval(&val, arr);
 		return val;
 	}
 
-	_value_array_next_get(ht, val);
+	_value_array_next_get(ht, &val);
 	return val;
 }
 
-engine_value *value_array_index_get(engine_value *arr, unsigned long idx) {
+zval value_array_index_get(zval *arr, unsigned long idx) {
 	HashTable *ht = NULL;
-	engine_value *val = value_new();
+	zval val = value_new();
 
-	switch (arr->kind) {
-	case KIND_ARRAY:
-	case KIND_MAP:
-		ht = Z_ARRVAL_P(arr->internal);
+	switch (Z_TYPE(val)) {
+	case IS_ARRAY:
+		ht = Z_ARRVAL_P(arr);
 		break;
-	case KIND_OBJECT:
-		ht = Z_OBJPROP_P(arr->internal);
+	case IS_OBJECT:
+		ht = Z_OBJPROP_P(arr);
 		break;
 	default:
 		// Attempting to return the first index of a non-array value will return
 		// the value itself, allowing for implicit conversions of scalar values
 		// to arrays.
 		if (idx == 0) {
-			value_set_zval(val, arr->internal);
+			value_set_zval(&val, arr);
 			return val;
 		}
 
 		return val;
 	}
 
-	_value_array_index_get(ht, idx, val);
+	_value_array_index_get(ht, idx, &val);
 	return val;
 }
 
-engine_value *value_array_key_get(engine_value *arr, char *key) {
+zval value_array_key_get(zval *arr, char *key) {
 	HashTable *ht = NULL;
-	engine_value *val = value_new();
+	zval val = value_new();
 
-	switch (arr->kind) {
-	case KIND_ARRAY:
-	case KIND_MAP:
-		ht = Z_ARRVAL_P(arr->internal);
+	switch (Z_TYPE_P(arr)) {
+	case IS_ARRAY:
+		ht = Z_ARRVAL_P(arr);
 		break;
-	case KIND_OBJECT:
-		ht = Z_OBJPROP_P(arr->internal);
+	case IS_OBJECT:
+		ht = Z_OBJPROP_P(arr);
 		break;
 	default:
 		return val;
 	}
 
-	_value_array_key_get(ht, key, val);
+	_value_array_key_get(ht, key, &val);
 	return val;
 }
 

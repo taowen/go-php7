@@ -64,18 +64,17 @@ void context_exec(engine_context *context, char *filename) {
 }
 
 void *context_eval(engine_context *context, char *script) {
-	zval *str = _value_init();
+	zval str = _value_init();
 	_value_set_string(&str, script);
 
 	// Compile script value.
 	uint32_t compiler_options = CG(compiler_options);
 
 	CG(compiler_options) = ZEND_COMPILE_DEFAULT_FOR_EVAL;
-	zend_op_array *op = zend_compile_string(str, "gophp-engine");
+	zend_op_array *op = zend_compile_string(&str, "gophp-engine");
 	CG(compiler_options) = compiler_options;
 
-	zval_dtor(str);
-	efree(str);
+	zval_dtor(&str);
 
 	// Return error if script failed to compile.
 	if (!op) {
@@ -92,8 +91,8 @@ void *context_eval(engine_context *context, char *script) {
 }
 
 void context_bind(engine_context *context, char *name, void *value) {
-	engine_value *v = (engine_value *) value;
-	_context_bind(name, v->internal);
+	zval *v = (zval *) value;
+	_context_bind(name, v);
 }
 
 void context_destroy(engine_context *context) {

@@ -3,13 +3,13 @@
 // the LICENSE file.
 
 static zval *_receiver_get(zval *object, zval *member, int type, void **cache_slot, zval *retval) {
-	engine_value *result = receiver_get(object, member);
+	zval *result = receiver_get(object, member);
 	if (result == NULL) {
 		ZVAL_NULL(retval);
 		return retval;
 	}
 
-	value_copy(retval, result->internal);
+	value_copy(retval, result);
 	_value_destroy(result);
 
 	return retval;

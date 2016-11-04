@@ -66,6 +66,8 @@ var valueNewTests = []struct {
 }
 
 func TestValueNew(t *testing.T) {
+	e, _ = New()
+	defer e.Destroy()
 	c, _ := e.NewContext()
 
 	for _, tt := range valueNewTests {
@@ -90,6 +92,18 @@ func TestValueNew(t *testing.T) {
 	}
 
 	c.Destroy()
+}
+
+func TestCopy(t *testing.T) {
+	e, _ = New()
+	defer e.Destroy()
+	c, _ := e.NewContext()
+	defer c.Destroy()
+	val, _ := NewValue(struct {
+		I string
+	}{"hello"})
+	//fmt.Println(val.Interface())
+	val.Destroy()
 }
 
 var valueNewInvalidTests = []interface{}{

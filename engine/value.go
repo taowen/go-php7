@@ -15,9 +15,9 @@ import "C"
 
 import (
 	"fmt"
-	"reflect"
 	"strconv"
 	"unsafe"
+	"reflect"
 )
 
 // ValueKind represents the specific kind of type represented in Value.
@@ -25,38 +25,39 @@ type ValueKind int
 
 // PHP types representable in Go.
 const (
-	Null ValueKind = iota
-	Long
-	Double
-	Bool
-	String
-	Array
-	Map
-	Object
+	Null ValueKind = 1
+	Long = 4
+	Double = 5
+	Bool = 2
+	String = 6
+	Array = 7
+	Map = 9
+	Object = 8
 )
 
 // Value represents a PHP value.
 type Value struct {
-	value *C.struct__engine_value
+	value *C.struct__zval_struct
 }
 
-// NewValue creates a PHP value representation of a Go value val. Available
-// bindings for Go to PHP types are:
-//
-//	int             -> integer
-//	float64         -> double
-//	bool            -> boolean
-//	string          -> string
-//	slice           -> indexed array
-//	map[int|string] -> associative array
-//	struct          -> object
-//
-// It is only possible to bind maps with integer or string keys. Only exported
-// struct fields are passed to the PHP context. Bindings for functions and method
-// receivers to PHP functions and classes are only available in the engine scope,
-// and must be predeclared before context execution.
+ //NewValue creates a PHP value representation of a Go value val. Available
+ //bindings for Go to PHP types are:
+ //
+	//int             -> integer
+	//float64         -> double
+	//bool            -> boolean
+	//string          -> string
+	//slice           -> indexed array
+	//map[int|string] -> associative array
+	//struct          -> object
+ //
+ //It is only possible to bind maps with integer or string keys. Only exported
+ //struct fields are passed to the PHP context. Bindings for functions and method
+ //receivers to PHP functions and classes are only available in the engine scope,
+ //and must be predeclared before context execution.
 func NewValue(val interface{}) (*Value, error) {
-	ptr, err := C.value_new()
+	zval, err := C.value_new()
+	ptr := &zval
 	if err != nil {
 		return nil, fmt.Errorf("Unable to instantiate PHP value")
 	}
@@ -90,7 +91,6 @@ func NewValue(val interface{}) (*Value, error) {
 				C._value_destroy(ptr)
 				return nil, err
 			}
-			defer vs.Destroy()
 
 			C.value_array_next_set(ptr, vs.value)
 		}
@@ -107,7 +107,6 @@ func NewValue(val interface{}) (*Value, error) {
 					C._value_destroy(ptr)
 					return nil, err
 				}
-				defer kv.Destroy()
 
 				if kt == reflect.Int {
 					C.value_array_index_set(ptr, C.ulong(key.Int()), kv.value)
@@ -160,7 +159,8 @@ func NewValueFromPtr(val unsafe.Pointer) (*Value, error) {
 		return nil, fmt.Errorf("Cannot create value from 'nil' pointer")
 	}
 
-	ptr, err := C.value_new()
+	zval, err := C.value_new()
+	ptr := &zval
 	if err != nil {
 		return nil, fmt.Errorf("Unable to create new PHP value")
 	}
@@ -230,7 +230,8 @@ func (v *Value) Slice() []interface{} {
 	C.value_array_reset(v.value)
 
 	for i := 0; i < size; i++ {
-		t := &Value{value: C.value_array_next_get(v.value)}
+		zval := C.value_array_next_get(v.value)
+		t := &Value{value: &zval}
 
 		val[i] = t.Interface()
 		t.Destroy()
@@ -244,19 +245,22 @@ func (v *Value) Slice() []interface{} {
 // with a key of '0'.
 func (v *Value) Map() map[string]interface{} {
 	val := make(map[string]interface{})
-	keys := &Value{value: C.value_array_keys(v.value)}
+	zval := C.value_array_keys(v.value)
+	keys := &Value{value: &zval}
 
 	for _, k := range keys.Slice() {
 		switch key := k.(type) {
 		case int64:
-			t := &Value{value: C.value_array_index_get(v.value, C.ulong(key))}
+			zval := C.value_array_index_get(v.value, C.ulong(key))
+			t := &Value{value: &zval}
 			sk := strconv.Itoa((int)(key))
 
 			val[sk] = t.Interface()
 			t.Destroy()
 		case string:
 			str := C.CString(key)
-			t := &Value{value: C.value_array_key_get(v.value, str)}
+			zval := C.value_array_key_get(v.value, str)
+			t := &Value{value: &zval}
 			C.free(unsafe.Pointer(str))
 
 			val[key] = t.Interface()
