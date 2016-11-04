@@ -1,8 +1,17 @@
+Original library is at: https://github.com/deuill/go-php
+
+This fork is for:
+
+* Support PHP7 only, so that we can embrace the value semantics of zval
+* Fix memory leaks by using zval instead of engine_value
+* Use golang http request as PHP input
+* Use golang http response writer as PHP output
+
 # PHP bindings for Go [![API Documentation][godoc-svg]][godoc-url] [![MIT License][license-svg]][license-url]
 
 This package implements support for executing PHP scripts, exporting Go variables for use in PHP contexts, attaching Go method receivers as PHP classes and returning PHP variables for use in Go contexts.
 
-Both PHP 5.x and PHP 7.x series are supported.
+Only PHP 7.x series is supported.
 
 ## Building
 
