@@ -35,9 +35,6 @@ const (
 	IS_REFERENCE ValueKind = 10
 )
 
-// Value represents a PHP value.
-type Value C.struct__zval_struct
-
 //NewValue creates a PHP value representation of a Go value val. Available
 //bindings for Go to PHP types are:
 //
@@ -250,13 +247,6 @@ func fillMap(val map[string]interface{}, k interface{}, v *C.struct__zval_struct
 		defer DestroyValue(&zval)
 		val[key] = ToInterface(&zval)
 	}
-}
-
-// Ptr returns a pointer to the internal PHP value, and is mostly used for
-// passing to C functions.
-func (v *Value) Ptr() *C.struct__zval_struct {
-	zval := C.struct__zval_struct(*v)
-	return &zval
 }
 
 // Destroy removes all active references to the internal PHP value and frees
