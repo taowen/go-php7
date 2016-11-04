@@ -101,7 +101,7 @@ func TestCopy(t *testing.T) {
 	defer c.Destroy()
 	c.Output = os.Stdout
 	c.Bind("a", map[int]interface{}{10: "this"})
-	val, _ := c.Eval("var_dump($a); return $a;")
+	val, _ := c.Eval("return $a;")
 	defer val.Destroy()
 }
 

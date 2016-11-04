@@ -79,12 +79,7 @@ func (c *Context) Eval(script string) (*Value, error) {
 		return nil, fmt.Errorf("Error executing script '%s' in context", script)
 	}
 
-	defer C.free(result)
-
-	val, err := NewValueFromPtr(result)
-	if err != nil {
-		return nil, err
-	}
+	val := &Value{&result}
 
 	c.values = append(c.values, val)
 

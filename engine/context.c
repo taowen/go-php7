@@ -63,9 +63,9 @@ void context_exec(engine_context *context, char *filename) {
 	return;
 }
 
-void *context_eval(engine_context *context, char *script) {
+zval context_eval(engine_context *context, char *script) {
 	zval str = _value_init();
-	_value_set_string(&str, script);
+	ZVAL_STRING(&str, script);
 
 	// Compile script value.
 	uint32_t compiler_options = CG(compiler_options);
@@ -76,15 +76,16 @@ void *context_eval(engine_context *context, char *script) {
 
 	zval_dtor(&str);
 
+	zval result;
+	ZVAL_NULL(&result);
 	// Return error if script failed to compile.
 	if (!op) {
 		errno = 1;
-		return NULL;
+		return result;
 	}
 
 	// Attempt to execute compiled string.
-	zval *result = malloc(sizeof(zval));
-	_context_eval(op, result);
+	_context_eval(op, &result);
 
 	errno = 0;
 	return result;
