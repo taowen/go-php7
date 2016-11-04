@@ -26,7 +26,7 @@ func TestContextNew(t *testing.T) {
 		t.Fatalf("NewContext(): Struct fields are `nil` but no error returned")
 	}
 
-	c.Destroy()
+	e.RequestShutdown(c)
 }
 
 var execTests = []struct {
@@ -78,7 +78,7 @@ func TestContextExec(t *testing.T) {
 		script.Remove()
 	}
 
-	c.Destroy()
+	e.RequestShutdown(c)
 }
 
 var evalTests = []struct {
@@ -131,7 +131,7 @@ func TestContextEval(t *testing.T) {
 		DestroyValue(val)
 	}
 
-	c.Destroy()
+	e.RequestShutdown(c)
 }
 
 var headerTests = []struct {
@@ -173,7 +173,7 @@ func TestContextHeader(t *testing.T) {
 		}
 	}
 
-	c.Destroy()
+	e.RequestShutdown(c)
 }
 
 var logTests = []struct {
@@ -218,7 +218,7 @@ func TestContextLog(t *testing.T) {
 		}
 	}
 
-	c.Destroy()
+	e.RequestShutdown(c)
 }
 
 var bindTests = []struct {
@@ -297,7 +297,7 @@ func TestContextBind(t *testing.T) {
 		}
 	}
 
-	c.Destroy()
+	e.RequestShutdown(c)
 }
 
 func TestContextDestroy(t *testing.T) {
@@ -305,13 +305,13 @@ func TestContextDestroy(t *testing.T) {
 	defer e.Destroy()
 	c := &Context{}
 	e.RequestStartup(c)
-	c.Destroy()
+	e.RequestShutdown(c)
 
 	if c.context != nil {
 		t.Errorf("Context.Destroy(): Did not set internal fields to `nil`")
 	}
 
 	// Attempting to destroy a context twice should be a no-op.
-	c.Destroy()
+	e.RequestShutdown(c)
 }
 

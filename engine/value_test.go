@@ -69,7 +69,7 @@ func TestValueNew(t *testing.T) {
 	defer e.Destroy()
 	c := &Context{}
 	e.RequestStartup(c)
-	defer c.Destroy()
+	defer e.RequestShutdown(c)
 
 	for _, tt := range valueNewTests {
 		val, err := NewValue(tt.value)
@@ -113,7 +113,7 @@ func TestValueNewInvalid(t *testing.T) {
 	defer e.Destroy()
 	c := &Context{}
 	e.RequestStartup(c)
-	defer c.Destroy()
+	defer e.RequestShutdown(c)
 
 	for _, value := range valueNewInvalidTests {
 		val, err := NewValue(value)
@@ -170,7 +170,7 @@ func TestValueKind(t *testing.T) {
 	defer e.Destroy()
 	c := &Context{}
 	e.RequestStartup(c)
-	defer c.Destroy()
+	defer e.RequestShutdown(c)
 
 	for _, tt := range valueKindTests {
 		val, err := NewValue(tt.value)
@@ -231,7 +231,7 @@ func TestValueInt(t *testing.T) {
 	defer e.Destroy()
 	c := &Context{}
 	e.RequestStartup(c)
-	defer c.Destroy()
+	defer e.RequestShutdown(c)
 
 	for _, tt := range valueIntTests {
 		val, err := NewValue(tt.value)
@@ -292,7 +292,7 @@ func TestValueFloat(t *testing.T) {
 	defer e.Destroy()
 	c := &Context{}
 	e.RequestStartup(c)
-	defer c.Destroy()
+	defer e.RequestShutdown(c)
 
 	for _, tt := range valueFloatTests {
 		val, err := NewValue(tt.value)
@@ -353,7 +353,7 @@ func TestValueBool(t *testing.T) {
 	defer e.Destroy()
 	c := &Context{}
 	e.RequestStartup(c)
-	defer c.Destroy()
+	defer e.RequestShutdown(c)
 
 	for _, tt := range valueBoolTests {
 		val, err := NewValue(tt.value)
@@ -414,7 +414,7 @@ func TestValueString(t *testing.T) {
 	defer e.Destroy()
 	c := &Context{}
 	e.RequestStartup(c)
-	defer c.Destroy()
+	defer e.RequestShutdown(c)
 
 	for _, tt := range valueStringTests {
 		val, err := NewValue(tt.value)
@@ -475,7 +475,7 @@ func TestValueSlice(t *testing.T) {
 	defer e.Destroy()
 	c := &Context{}
 	e.RequestStartup(c)
-	defer c.Destroy()
+	defer e.RequestShutdown(c)
 
 	for _, tt := range valueSliceTests {
 		val, err := NewValue(tt.value)
@@ -536,7 +536,7 @@ func TestValueMap(t *testing.T) {
 	defer e.Destroy()
 	c := &Context{}
 	e.RequestStartup(c)
-	defer c.Destroy()
+	defer e.RequestShutdown(c)
 
 	for _, tt := range valueMapTests {
 		val, err := NewValue(tt.value)
@@ -560,7 +560,7 @@ func TestValueDestroy(t *testing.T) {
 	defer e.Destroy()
 	c := &Context{}
 	e.RequestStartup(c)
-	defer c.Destroy()
+	defer e.RequestShutdown(c)
 
 	val, err := NewValue(42)
 	if err != nil {

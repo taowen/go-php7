@@ -60,7 +60,7 @@ func TestEngineNewContext(t *testing.T) {
 	if err != nil {
 		t.Errorf("NewContext(): %s", err)
 	}
-	defer c.Destroy()
+	defer e.RequestShutdown(c)
 
 	if len(e.contexts) != 1 {
 		t.Errorf("NewContext(): `Engine.contexts` length is %d, should be 1", len(e.contexts))

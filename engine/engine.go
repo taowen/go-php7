@@ -70,6 +70,18 @@ func (e *Engine) RequestStartup(ctx *Context) error {
 	return nil
 }
 
+// Destroy tears down the current execution context
+// corresponds to PHP's RSHUTDOWN phase
+func (e *Engine) RequestShutdown(ctx *Context) {
+
+	if ctx.context == nil {
+		return
+	}
+	delete(e.contexts, ctx.context)
+	C.context_destroy(ctx.context)
+	ctx.context = nil
+}
+
 // Define registers a PHP class for the name passed, using function fn as
 // constructor for individual object instances as needed by the PHP context.
 //
@@ -114,7 +126,7 @@ func (e *Engine) Destroy() {
 	e.receivers = nil
 
 	for _, c := range e.contexts {
-		c.Destroy()
+		e.RequestShutdown(c)
 	}
 
 	e.contexts = nil

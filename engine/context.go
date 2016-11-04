@@ -77,14 +77,3 @@ func (c *Context) Eval(script string) (*C.struct__zval_struct, error) {
 
 	return &result, nil
 }
-
-// Destroy tears down the current execution context along with any active value
-// bindings for that context.
-func (c *Context) Destroy() {
-	if c.context == nil {
-		return
-	}
-
-	C.context_destroy(c.context)
-	c.context = nil
-}
