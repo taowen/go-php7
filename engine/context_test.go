@@ -117,13 +117,13 @@ func TestContextEval(t *testing.T) {
 			t.Errorf("Context.Eval('%s'): Expected output '%s', actual '%s'", tt.script, tt.output, output)
 		}
 
-		result := val.Interface()
+		result := ToInterface(val)
 
 		if reflect.DeepEqual(result, tt.value) == false {
 			t.Errorf("Context.Eval('%s'): Expected value '%#v', actual '%#v'", tt.script, tt.value, result)
 		}
 
-		val.Destroy()
+		DestroyValue(val)
 	}
 
 	c.Destroy()

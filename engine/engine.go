@@ -189,20 +189,13 @@ func engineSetHeader(ctx *C.struct__engine_context, operation C.uint, buffer uns
 }
 
 //export engineReceiverNew
-func engineReceiverNew(rcvr *C.struct__engine_receiver, args unsafe.Pointer) C.int {
+func engineReceiverNew(rcvr *C.struct__engine_receiver, args *C.struct__zval_struct) C.int {
 	n := C.GoString(C._receiver_get_name(rcvr))
 	if engine == nil || engine.receivers[n] == nil {
 		return 1
 	}
 
-	va, err := NewValueFromPtr(args)
-	if err != nil {
-		return 1
-	}
-
-	defer va.Destroy()
-
-	obj, err := engine.receivers[n].NewObject(va.Slice())
+	obj, err := engine.receivers[n].NewObject(ToSlice(args))
 	if err != nil {
 		return 1
 	}
@@ -224,22 +217,17 @@ func engineReceiverGet(rcvr *C.struct__engine_receiver, name *C.char) *C.struct_
 		return nil
 	}
 
-	return val.Ptr()
+	return val
 }
 
 //export engineReceiverSet
-func engineReceiverSet(rcvr *C.struct__engine_receiver, name *C.char, val unsafe.Pointer) {
+func engineReceiverSet(rcvr *C.struct__engine_receiver, name *C.char, val *C.struct__zval_struct) {
 	n := C.GoString(C._receiver_get_name(rcvr))
 	if engine == nil || engine.receivers[n].objects[rcvr] == nil {
 		return
 	}
 
-	v, err := NewValueFromPtr(val)
-	if err != nil {
-		return
-	}
-
-	engine.receivers[n].objects[rcvr].Set(C.GoString(name), v.Interface())
+	engine.receivers[n].objects[rcvr].Set(C.GoString(name), ToInterface(val))
 }
 
 //export engineReceiverExists
@@ -257,24 +245,16 @@ func engineReceiverExists(rcvr *C.struct__engine_receiver, name *C.char) C.int {
 }
 
 //export engineReceiverCall
-func engineReceiverCall(rcvr *C.struct__engine_receiver, name *C.char, args unsafe.Pointer) *C.struct__zval_struct {
+func engineReceiverCall(rcvr *C.struct__engine_receiver, name *C.char, args *C.struct__zval_struct) *C.struct__zval_struct {
 	n := C.GoString(C._receiver_get_name(rcvr))
 	if engine == nil || engine.receivers[n].objects[rcvr] == nil {
 		return nil
 	}
 
-	// Process input arguments.
-	va, err := NewValueFromPtr(args)
-	if err != nil {
+	val := engine.receivers[n].objects[rcvr].Call(C.GoString(name), ToSlice(args))
+	if IsNull(val) {
 		return nil
 	}
 
-	defer va.Destroy()
-
-	val := engine.receivers[n].objects[rcvr].Call(C.GoString(name), va.Slice())
-	if val.IsNull() {
-		return nil
-	}
-
-	return val.Ptr()
+	return val
 }

@@ -46,7 +46,7 @@ func (c *Context) Bind(name string, val interface{}) error {
 	n := C.CString(name)
 	defer C.free(unsafe.Pointer(n))
 
-	C.context_bind(c.context, n, v.Ptr())
+	C.context_bind(c.context, n, v)
 
 	return nil
 }
@@ -69,16 +69,16 @@ func (c *Context) Exec(filename string) error {
 // Eval executes the PHP expression contained in script, and returns a Value
 // containing the PHP value returned by the expression, if any. Any output
 // produced is written context's pre-defined io.Writer instance.
-func (c *Context) Eval(script string) (Value, error) {
+func (c *Context) Eval(script string) (*C.struct__zval_struct, error) {
 	s := C.CString(script)
 	defer C.free(unsafe.Pointer(s))
 
 	result, err := C.context_eval(c.context, s)
 	if err != nil {
-		return Value{}, fmt.Errorf("Error executing script '%s' in context", script)
+		return nil, fmt.Errorf("Error executing script '%s' in context", script)
 	}
 
-	return Value(result), nil
+	return &result, nil
 }
 
 // Destroy tears down the current execution context along with any active value

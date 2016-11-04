@@ -77,18 +77,18 @@ func TestValueNew(t *testing.T) {
 			continue
 		}
 
-		if val.IsNull() {
+		if IsNull(val) {
 			t.Errorf("NewValue('%v'): No error returned but value is `nil`", tt.value)
 			continue
 		}
 
-		actual := val.Interface()
+		actual := ToInterface(val)
 
 		if reflect.DeepEqual(actual, tt.expected) == false {
 			t.Errorf("NewValue('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
 		}
 
-		val.Destroy()
+		DestroyValue(val)
 	}
 
 	c.Destroy()
@@ -102,7 +102,7 @@ func TestCopy(t *testing.T) {
 	c.Output = os.Stdout
 	c.Bind("a", map[int]interface{}{10: "this"})
 	val, _ := c.Eval("return $a;")
-	defer val.Destroy()
+	defer DestroyValue(val)
 }
 
 var valueNewInvalidTests = []interface{}{
@@ -125,7 +125,7 @@ func TestValueNewInvalid(t *testing.T) {
 	for _, value := range valueNewInvalidTests {
 		val, err := NewValue(value)
 		if err == nil {
-			val.Destroy()
+			DestroyValue(val)
 			t.Errorf("NewValue('%v'): Value is invalid but no error occured", value)
 		}
 	}
@@ -186,13 +186,13 @@ func TestValueKind(t *testing.T) {
 			continue
 		}
 
-		actual := val.Kind()
+		actual := GetKind(val)
 
 		if actual != tt.expected {
 			t.Errorf("Value.Kind('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
 		}
 
-		val.Destroy()
+		DestroyValue(val)
 	}
 
 	c.Destroy()
@@ -247,13 +247,13 @@ func TestValueInt(t *testing.T) {
 			continue
 		}
 
-		actual := val.Int()
+		actual := ToInt(val)
 
 		if reflect.DeepEqual(actual, tt.expected) == false {
 			t.Errorf("Value.Int('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
 		}
 
-		val.Destroy()
+		DestroyValue(val)
 	}
 
 	c.Destroy()
@@ -308,13 +308,13 @@ func TestValueFloat(t *testing.T) {
 			continue
 		}
 
-		actual := val.Float()
+		actual := ToFloat(val)
 
 		if reflect.DeepEqual(actual, tt.expected) == false {
 			t.Errorf("Value.Float('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
 		}
 
-		val.Destroy()
+		DestroyValue(val)
 	}
 
 	c.Destroy()
@@ -369,13 +369,13 @@ func TestValueBool(t *testing.T) {
 			continue
 		}
 
-		actual := val.Bool()
+		actual := ToBool(val)
 
 		if reflect.DeepEqual(actual, tt.expected) == false {
 			t.Errorf("Value.Bool('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
 		}
 
-		val.Destroy()
+		DestroyValue(val)
 	}
 
 	c.Destroy()
@@ -430,13 +430,13 @@ func TestValueString(t *testing.T) {
 			continue
 		}
 
-		actual := val.String()
+		actual := ToString(val)
 
 		if reflect.DeepEqual(actual, tt.expected) == false {
 			t.Errorf("Value.String('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
 		}
 
-		val.Destroy()
+		DestroyValue(val)
 	}
 
 	c.Destroy()
@@ -491,13 +491,13 @@ func TestValueSlice(t *testing.T) {
 			continue
 		}
 
-		actual := val.Slice()
+		actual := ToSlice(val)
 
 		if reflect.DeepEqual(actual, tt.expected) == false {
 			t.Errorf("Value.Slice('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
 		}
 
-		val.Destroy()
+		DestroyValue(val)
 	}
 
 	c.Destroy()
@@ -552,32 +552,16 @@ func TestValueMap(t *testing.T) {
 			continue
 		}
 
-		actual := val.Map()
+		actual := ToMap(val)
 
 		if reflect.DeepEqual(actual, tt.expected) == false {
 			t.Errorf("Value.Map('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
 		}
 
-		val.Destroy()
+		DestroyValue(val)
 	}
 
 	c.Destroy()
-}
-
-func TestValuePtr(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
-	c, _ := e.NewContext()
-	defer c.Destroy()
-
-	val, err := NewValue(42)
-	if err != nil {
-		t.Fatalf("NewValue('%v'): %s", 42, err)
-	}
-
-	if val.Ptr() == nil {
-		t.Errorf("Value.Ptr('%v'): Unable to create pointer from value", 42)
-	}
 }
 
 func TestValueDestroy(t *testing.T) {
@@ -591,12 +575,12 @@ func TestValueDestroy(t *testing.T) {
 		t.Fatalf("NewValue('%v'): %s", 42, err)
 	}
 
-	val.Destroy()
+	DestroyValue(val)
 
-	if !val.IsNull() {
+	if !IsNull(val) {
 		t.Errorf("Value.Destroy(): Did not set internal fields to `nil`")
 	}
 
 	// Attempting to destroy a value twice should be a no-op.
-	val.Destroy()
+	DestroyValue(val)
 }

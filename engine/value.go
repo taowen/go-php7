@@ -57,11 +57,10 @@ type Value C.struct__zval_struct
  //struct fields are passed to the PHP context. Bindings for functions and method
  //receivers to PHP functions and classes are only available in the engine scope,
  //and must be predeclared before context execution.
-func NewValue(val interface{}) (Value, error) {
+func NewValue(val interface{}) (*C.struct__zval_struct, error) {
 	zval, err := C.value_new()
-	ptr := &zval
 	if err != nil {
-		return Value(zval), fmt.Errorf("Unable to instantiate PHP value")
+		return &zval, fmt.Errorf("Unable to instantiate PHP value")
 	}
 
 	v := reflect.ValueOf(val)
@@ -70,60 +69,60 @@ func NewValue(val interface{}) (Value, error) {
 	switch v.Kind() {
 	// Bind integer to PHP int type.
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		C.value_set_long(ptr, C.long(v.Int()))
+		C.value_set_long(&zval, C.long(v.Int()))
 	// Bind floating point number to PHP double type.
 	case reflect.Float32, reflect.Float64:
-		C.value_set_double(ptr, C.double(v.Float()))
+		C.value_set_double(&zval, C.double(v.Float()))
 	// Bind boolean to PHP bool type.
 	case reflect.Bool:
-		C.value_set_bool(ptr, C.bool(v.Bool()))
+		C.value_set_bool(&zval, C.bool(v.Bool()))
 	// Bind string to PHP string type.
 	case reflect.String:
 		str := C.CString(v.String())
 		defer C.free(unsafe.Pointer(str))
 
-		C.value_set_string(ptr, str)
+		C.value_set_string(&zval, str)
 	// Bind slice to PHP indexed array type.
 	case reflect.Slice:
-		C.value_set_array(ptr, C.uint(v.Len()))
+		C.value_set_array(&zval, C.uint(v.Len()))
 
 		for i := 0; i < v.Len(); i++ {
 			vs, err := NewValue(v.Index(i).Interface())
 			if err != nil {
-				C._value_destroy(ptr)
-				return Value{}, err
+				C._value_destroy(&zval)
+				return nil, err
 			}
 
-			C.value_array_next_set(ptr, vs.Ptr())
+			C.value_array_next_set(&zval, vs)
 		}
 	// Bind map (with integer or string keys) to PHP associative array type.
 	case reflect.Map:
 		kt := v.Type().Key().Kind()
 
 		if kt == reflect.Int || kt == reflect.String {
-			C.value_set_array(ptr, C.uint(v.Len()))
+			C.value_set_array(&zval, C.uint(v.Len()))
 
 			for _, key := range v.MapKeys() {
 				kv, err := NewValue(v.MapIndex(key).Interface())
 				if err != nil {
-					C._value_destroy(ptr)
-					return Value{}, err
+					C._value_destroy(&zval)
+					return nil, err
 				}
 
 				if kt == reflect.Int {
-					C.value_array_index_set(ptr, C.ulong(key.Int()), kv.Ptr())
+					C.value_array_index_set(&zval, C.ulong(key.Int()), kv)
 				} else {
 					str := C.CString(key.String())
-					defer C.free(unsafe.Pointer(str))
-					C.value_array_key_set(ptr, str, kv.Ptr())
+					C.value_array_key_set(&zval, str, kv)
+					C.free(unsafe.Pointer(str))
 				}
 			}
 		} else {
-			return Value{}, fmt.Errorf("Unable to create value of unknown type '%T'", val)
+			return nil, fmt.Errorf("Unable to create value of unknown type '%T'", val)
 		}
 	// Bind struct to PHP object (stdClass) type.
 	case reflect.Struct:
-		C.value_set_object(ptr)
+		C.value_set_object(&zval)
 		vt := v.Type()
 
 		for i := 0; i < v.NumField(); i++ {
@@ -134,98 +133,78 @@ func NewValue(val interface{}) (Value, error) {
 
 			fv, err := NewValue(v.Field(i).Interface())
 			if err != nil {
-				C._value_destroy(ptr)
-				return Value{}, err
+				C._value_destroy(&zval)
+				return nil, err
 			}
-			defer fv.Destroy()
-
 			str := C.CString(vt.Field(i).Name)
-			defer C.free(unsafe.Pointer(str))
-
-			C.value_object_property_set(ptr, str, fv.Ptr())
+			C.value_object_property_set(&zval, str, fv)
+			C.free(unsafe.Pointer(str))
+			DestroyValue(fv)
 		}
 	case reflect.Invalid:
-		C.value_set_null(ptr)
+		C.value_set_null(&zval)
 	default:
-		C._value_destroy(ptr)
-		return Value{}, fmt.Errorf("Unable to create value of unknown type '%T'", val)
+		C._value_destroy(&zval)
+		return nil, fmt.Errorf("Unable to create value of unknown type '%T'", val)
 	}
 
-	return Value(zval), nil
+	return &zval, nil
 }
 
-// NewValueFromPtr creates a Value type from an existing PHP value pointer.
-func NewValueFromPtr(val unsafe.Pointer) (Value, error) {
-	if val == nil {
-		return Value{}, fmt.Errorf("Cannot create value from 'nil' pointer")
-	}
-
-	zval, err := C.value_new()
-	if err != nil {
-		return Value{}, fmt.Errorf("Unable to create new PHP value")
-	}
-
-	if _, err := C.value_set_zval(&zval, (*C.zval)(val)); err != nil {
-		return Value{}, fmt.Errorf("Unable to set PHP value from pointer")
-	}
-
-	return Value(zval), nil
-}
-
-func (v Value) IsNull() bool {
-	return v.Kind() == IS_NULL
+func IsNull(zval *C.struct__zval_struct) bool {
+	return GetKind(zval) == IS_NULL
 }
 
 // Kind returns the Value's concrete kind of type.
-func (v Value) Kind() ValueKind {
-	return (ValueKind)(C.value_kind(v.Ptr()))
+func GetKind(zval *C.struct__zval_struct) ValueKind {
+	return (ValueKind)(C.value_kind(zval))
 }
 
 // Interface returns the internal PHP value as it lies, with no conversion step.
-func (v Value) Interface() interface{} {
-	switch v.Kind() {
+func ToInterface(zval *C.struct__zval_struct) interface{} {
+	switch GetKind(zval) {
 	case IS_LONG:
-		return v.Int()
+		return ToInt(zval)
 	case IS_DOUBLE:
-		return v.Float()
+		return ToFloat(zval)
 	case IS_TRUE:
 		return true
 	case IS_FALSE:
 		return false
 	case IS_STRING:
-		return v.String()
+		return ToString(zval)
 	case IS_ARRAY:
-		if C.value_array_is_associative(v.Ptr()) {
-			return v.Map()
+		if C.value_array_is_associative(zval) {
+			return ToMap(zval)
 		} else {
-			return v.Slice()
+			return ToSlice(zval)
 		}
 	case IS_OBJECT:
-		return v.Map()
+		return ToMap(zval)
 	}
 
 	return nil
 }
 
 // Int returns the internal PHP value as an integer, converting if necessary.
-func (v Value) Int() int64 {
-	return (int64)(C.value_get_long(v.Ptr()))
+func ToInt(zval *C.struct__zval_struct) int64 {
+	return (int64)(C.value_get_long(zval))
 }
 
 // Float returns the internal PHP value as a floating point number, converting
 // if necessary.
-func (v Value) Float() float64 {
-	return (float64)(C.value_get_double(v.Ptr()))
+func ToFloat(zval *C.struct__zval_struct) float64 {
+	return (float64)(C.value_get_double(zval))
 }
 
 // Bool returns the internal PHP value as a boolean, converting if necessary.
-func (v Value) Bool() bool {
-	return (bool)(C.value_get_bool(v.Ptr()))
+func ToBool(zval *C.struct__zval_struct) bool {
+	return (bool)(C.value_get_bool(zval))
 }
 
 // String returns the internal PHP value as a string, converting if necessary.
-func (v Value) String() string {
-	str := C.value_get_string(v.Ptr())
+func ToString(zval *C.struct__zval_struct) string {
+	str := C.value_get_string(zval)
 	defer C.free(unsafe.Pointer(str))
 
 	return C.GoString(str)
@@ -233,18 +212,16 @@ func (v Value) String() string {
 
 // Slice returns the internal PHP value as a slice of interface types. Non-array
 // values are implicitly converted to single-element slices.
-func (v Value) Slice() []interface{} {
-	size := (int)(C.value_array_size(v.Ptr()))
+func ToSlice(zval *C.struct__zval_struct) []interface{} {
+	size := (int)(C.value_array_size(zval))
 	val := make([]interface{}, size)
 
-	C.value_array_reset(v.Ptr())
+	C.value_array_reset(zval)
 
 	for i := 0; i < size; i++ {
-		zval := C.value_array_next_get(v.Ptr())
-		t := Value(zval)
-
-		val[i] = t.Interface()
-		t.Destroy()
+		zval := C.value_array_next_get(zval)
+		val[i] = ToInterface(&zval)
+		DestroyValue(&zval)
 	}
 
 	return val
@@ -253,33 +230,30 @@ func (v Value) Slice() []interface{} {
 // Map returns the internal PHP value as a map of interface types, indexed by
 // string keys. Non-array values are implicitly converted to single-element maps
 // with a key of '0'.
-func (v Value) Map() map[string]interface{} {
+func ToMap(v *C.struct__zval_struct) map[string]interface{} {
 	val := make(map[string]interface{})
-	zval := C.value_array_keys(v.Ptr())
-	keys := Value(zval)
-	fmt.Println(reflect.TypeOf(keys.Slice()[0]))
-	for _, k := range keys.Slice() {
-		switch key := k.(type) {
-		case int64:
-			zval := C.value_array_index_get(v.Ptr(), C.ulong(key))
-			t := Value(zval)
-			sk := strconv.Itoa((int)(key))
-
-			val[sk] = t.Interface()
-			t.Destroy()
-		case string:
-			str := C.CString(key)
-			zval := C.value_array_key_get(v.Ptr(), str)
-			t := Value(zval)
-			C.free(unsafe.Pointer(str))
-
-			val[key] = t.Interface()
-			t.Destroy()
-		}
+	keys := C.value_array_keys(v)
+	defer DestroyValue(&keys)
+	for _, k := range ToSlice(&keys) {
+		fillMap(val, k, v)
 	}
-
-	keys.Destroy()
 	return val
+}
+
+func fillMap(val map[string]interface{}, k interface{}, v *C.struct__zval_struct) {
+	switch key := k.(type) {
+	case int64:
+		zval := C.value_array_index_get(v, C.ulong(key))
+		defer DestroyValue(&zval)
+		sk := strconv.Itoa((int)(key))
+		val[sk] = ToInterface(&zval)
+	case string:
+		str := C.CString(key)
+		defer C.free(unsafe.Pointer(str))
+		zval := C.value_array_key_get(v, str)
+		defer DestroyValue(&zval)
+		val[key] = ToInterface(&zval)
+	}
 }
 
 // Ptr returns a pointer to the internal PHP value, and is mostly used for
@@ -291,6 +265,6 @@ func (v *Value) Ptr() *C.struct__zval_struct {
 
 // Destroy removes all active references to the internal PHP value and frees
 // any resources used.
-func (v Value) Destroy() {
-	C._value_destroy(v.Ptr())
+func DestroyValue(zval *C.struct__zval_struct) {
+	C._value_destroy(zval)
 }
