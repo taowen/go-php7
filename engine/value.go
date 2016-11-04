@@ -4,9 +4,6 @@
 
 package engine
 
-// #cgo CFLAGS: -I/usr/include/php -I/usr/include/php/main -I/usr/include/php/TSRM
-// #cgo CFLAGS: -I/usr/include/php/Zend -Iinclude
-//
 // #include <stdlib.h>
 // #include <stdbool.h>
 // #include <main/php.h>
