@@ -77,7 +77,7 @@ func TestValueNew(t *testing.T) {
 			continue
 		}
 
-		if val == nil {
+		if val.IsNull() {
 			t.Errorf("NewValue('%v'): No error returned but value is `nil`", tt.value)
 			continue
 		}

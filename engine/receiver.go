@@ -88,14 +88,14 @@ type ReceiverObject struct {
 
 // Get returns a named internal property of the receiver object instance, or an
 // error if the property does not exist or is not addressable.
-func (o *ReceiverObject) Get(name string) (*Value, error) {
+func (o *ReceiverObject) Get(name string) (Value, error) {
 	if _, exists := o.values[name]; !exists || !o.values[name].CanInterface() {
-		return nil, fmt.Errorf("Value '%s' does not exist or is not addressable", name)
+		return Value{}, fmt.Errorf("Value '%s' does not exist or is not addressable", name)
 	}
 
 	val, err := NewValue(o.values[name].Interface())
 	if err != nil {
-		return nil, err
+		return Value{}, err
 	}
 
 	return val, nil
@@ -125,9 +125,9 @@ func (o *ReceiverObject) Exists(name string) bool {
 // Call executes a method receiver's named internal method, passing a slice of
 // values as arguments to the method. If the method fails to execute or returns
 // no value, nil is returned, otherwise a Value instance is returned.
-func (o *ReceiverObject) Call(name string, args []interface{}) *Value {
+func (o *ReceiverObject) Call(name string, args []interface{}) Value {
 	if _, exists := o.methods[name]; !exists {
-		return nil
+		return Value{}
 	}
 
 	var in []reflect.Value
@@ -151,12 +151,12 @@ func (o *ReceiverObject) Call(name string, args []interface{}) *Value {
 	} else if len(val) == 1 {
 		result = val[0].Interface()
 	} else {
-		return nil
+		return Value{}
 	}
 
 	v, err := NewValue(result)
 	if err != nil {
-		return nil
+		return Value{}
 	}
 
 	return v

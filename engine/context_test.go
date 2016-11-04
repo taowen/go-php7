@@ -21,7 +21,7 @@ func TestContextNew(t *testing.T) {
 		t.Fatalf("NewContext(): %s", err)
 	}
 
-	if c.context == nil || c.Header == nil || c.values == nil {
+	if c.context == nil || c.Header == nil {
 		t.Fatalf("NewContext(): Struct fields are `nil` but no error returned")
 	}
 
@@ -296,7 +296,7 @@ func TestContextDestroy(t *testing.T) {
 	c, _ := e.NewContext()
 	c.Destroy()
 
-	if c.context != nil || c.values != nil {
+	if c.context != nil {
 		t.Errorf("Context.Destroy(): Did not set internal fields to `nil`")
 	}
 

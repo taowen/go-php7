@@ -31,7 +31,6 @@ type Context struct {
 	Header http.Header
 
 	context *C.struct__engine_context
-	values  []*Value
 }
 
 // Bind allows for binding Go values into the current execution context under
@@ -70,20 +69,16 @@ func (c *Context) Exec(filename string) error {
 // Eval executes the PHP expression contained in script, and returns a Value
 // containing the PHP value returned by the expression, if any. Any output
 // produced is written context's pre-defined io.Writer instance.
-func (c *Context) Eval(script string) (*Value, error) {
+func (c *Context) Eval(script string) (Value, error) {
 	s := C.CString(script)
 	defer C.free(unsafe.Pointer(s))
 
 	result, err := C.context_eval(c.context, s)
 	if err != nil {
-		return nil, fmt.Errorf("Error executing script '%s' in context", script)
+		return Value{}, fmt.Errorf("Error executing script '%s' in context", script)
 	}
 
-	val := &Value{&result}
-
-	c.values = append(c.values, val)
-
-	return val, nil
+	return Value{&result}, nil
 }
 
 // Destroy tears down the current execution context along with any active value
@@ -92,12 +87,6 @@ func (c *Context) Destroy() {
 	if c.context == nil {
 		return
 	}
-
-	for _, v := range c.values {
-		v.Destroy()
-	}
-
-	c.values = nil
 
 	C.context_destroy(c.context)
 	c.context = nil

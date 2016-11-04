@@ -59,11 +59,11 @@ type Value struct {
  //struct fields are passed to the PHP context. Bindings for functions and method
  //receivers to PHP functions and classes are only available in the engine scope,
  //and must be predeclared before context execution.
-func NewValue(val interface{}) (*Value, error) {
+func NewValue(val interface{}) (Value, error) {
 	zval, err := C.value_new()
 	ptr := &zval
 	if err != nil {
-		return nil, fmt.Errorf("Unable to instantiate PHP value")
+		return Value{value: ptr}, fmt.Errorf("Unable to instantiate PHP value")
 	}
 
 	v := reflect.ValueOf(val)
@@ -93,7 +93,7 @@ func NewValue(val interface{}) (*Value, error) {
 			vs, err := NewValue(v.Index(i).Interface())
 			if err != nil {
 				C._value_destroy(ptr)
-				return nil, err
+				return Value{}, err
 			}
 
 			C.value_array_next_set(ptr, vs.value)
@@ -109,7 +109,7 @@ func NewValue(val interface{}) (*Value, error) {
 				kv, err := NewValue(v.MapIndex(key).Interface())
 				if err != nil {
 					C._value_destroy(ptr)
-					return nil, err
+					return Value{}, err
 				}
 
 				if kt == reflect.Int {
@@ -121,7 +121,7 @@ func NewValue(val interface{}) (*Value, error) {
 				}
 			}
 		} else {
-			return nil, fmt.Errorf("Unable to create value of unknown type '%T'", val)
+			return Value{}, fmt.Errorf("Unable to create value of unknown type '%T'", val)
 		}
 	// Bind struct to PHP object (stdClass) type.
 	case reflect.Struct:
@@ -137,7 +137,7 @@ func NewValue(val interface{}) (*Value, error) {
 			fv, err := NewValue(v.Field(i).Interface())
 			if err != nil {
 				C._value_destroy(ptr)
-				return nil, err
+				return Value{}, err
 			}
 			defer fv.Destroy()
 
@@ -150,38 +150,42 @@ func NewValue(val interface{}) (*Value, error) {
 		C.value_set_null(ptr)
 	default:
 		C._value_destroy(ptr)
-		return nil, fmt.Errorf("Unable to create value of unknown type '%T'", val)
+		return Value{value: ptr}, fmt.Errorf("Unable to create value of unknown type '%T'", val)
 	}
 
-	return &Value{value: ptr}, nil
+	return Value{value: ptr}, nil
 }
 
 // NewValueFromPtr creates a Value type from an existing PHP value pointer.
-func NewValueFromPtr(val unsafe.Pointer) (*Value, error) {
+func NewValueFromPtr(val unsafe.Pointer) (Value, error) {
 	if val == nil {
-		return nil, fmt.Errorf("Cannot create value from 'nil' pointer")
+		return Value{}, fmt.Errorf("Cannot create value from 'nil' pointer")
 	}
 
 	zval, err := C.value_new()
 	ptr := &zval
 	if err != nil {
-		return nil, fmt.Errorf("Unable to create new PHP value")
+		return Value{}, fmt.Errorf("Unable to create new PHP value")
 	}
 
 	if _, err := C.value_set_zval(ptr, (*C.zval)(val)); err != nil {
-		return nil, fmt.Errorf("Unable to set PHP value from pointer")
+		return Value{}, fmt.Errorf("Unable to set PHP value from pointer")
 	}
 
-	return &Value{value: ptr}, nil
+	return Value{value: ptr}, nil
+}
+
+func (v Value) IsNull() bool {
+	return v.value == nil || v.Kind() == IS_NULL
 }
 
 // Kind returns the Value's concrete kind of type.
-func (v *Value) Kind() ValueKind {
+func (v Value) Kind() ValueKind {
 	return (ValueKind)(C.value_kind(v.value))
 }
 
 // Interface returns the internal PHP value as it lies, with no conversion step.
-func (v *Value) Interface() interface{} {
+func (v Value) Interface() interface{} {
 	switch v.Kind() {
 	case IS_LONG:
 		return v.Int()
@@ -207,23 +211,23 @@ func (v *Value) Interface() interface{} {
 }
 
 // Int returns the internal PHP value as an integer, converting if necessary.
-func (v *Value) Int() int64 {
+func (v Value) Int() int64 {
 	return (int64)(C.value_get_long(v.value))
 }
 
 // Float returns the internal PHP value as a floating point number, converting
 // if necessary.
-func (v *Value) Float() float64 {
+func (v Value) Float() float64 {
 	return (float64)(C.value_get_double(v.value))
 }
 
 // Bool returns the internal PHP value as a boolean, converting if necessary.
-func (v *Value) Bool() bool {
+func (v Value) Bool() bool {
 	return (bool)(C.value_get_bool(v.value))
 }
 
 // String returns the internal PHP value as a string, converting if necessary.
-func (v *Value) String() string {
+func (v Value) String() string {
 	str := C.value_get_string(v.value)
 	defer C.free(unsafe.Pointer(str))
 
@@ -232,7 +236,7 @@ func (v *Value) String() string {
 
 // Slice returns the internal PHP value as a slice of interface types. Non-array
 // values are implicitly converted to single-element slices.
-func (v *Value) Slice() []interface{} {
+func (v Value) Slice() []interface{} {
 	size := (int)(C.value_array_size(v.value))
 	val := make([]interface{}, size)
 
@@ -252,7 +256,7 @@ func (v *Value) Slice() []interface{} {
 // Map returns the internal PHP value as a map of interface types, indexed by
 // string keys. Non-array values are implicitly converted to single-element maps
 // with a key of '0'.
-func (v *Value) Map() map[string]interface{} {
+func (v Value) Map() map[string]interface{} {
 	val := make(map[string]interface{})
 	zval := C.value_array_keys(v.value)
 	keys := &Value{value: &zval}
@@ -283,13 +287,13 @@ func (v *Value) Map() map[string]interface{} {
 
 // Ptr returns a pointer to the internal PHP value, and is mostly used for
 // passing to C functions.
-func (v *Value) Ptr() unsafe.Pointer {
+func (v Value) Ptr() unsafe.Pointer {
 	return unsafe.Pointer(v.value)
 }
 
 // Destroy removes all active references to the internal PHP value and frees
 // any resources used.
-func (v *Value) Destroy() {
+func (v Value) Destroy() {
 	if v.value == nil {
 		return
 	}

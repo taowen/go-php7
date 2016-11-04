@@ -67,7 +67,6 @@ func (e *Engine) NewContext() (*Context, error) {
 	ctx := &Context{
 		Header:  make(http.Header),
 		context: ptr,
-		values:  make([]*Value, 0),
 	}
 
 	// Store reference to context, using pointer as key.
@@ -273,7 +272,7 @@ func engineReceiverCall(rcvr *C.struct__engine_receiver, name *C.char, args unsa
 	defer va.Destroy()
 
 	val := engine.receivers[n].objects[rcvr].Call(C.GoString(name), va.Slice())
-	if val == nil {
+	if val.IsNull() {
 		return nil
 	}
 
