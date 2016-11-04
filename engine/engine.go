@@ -105,6 +105,9 @@ func (e *Engine) Define(name string, fn func(args []interface{}) interface{}) er
 
 // Destroy shuts down and frees any resources related to the PHP engine bindings.
 func (e *Engine) Destroy() {
+	if e == nil {
+		return
+	}
 	if e.engine == nil {
 		return
 	}

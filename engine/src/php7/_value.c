@@ -3,13 +3,14 @@
 // the LICENSE file.
 
 zval _value_init() {
-	zval tmp;
-	ZVAL_NULL(&tmp);
-	return tmp;
+	zval val;
+	ZVAL_NULL(&val);
+	return val;
 }
 
 void _value_destroy(zval *val) {
 	zval_dtor(val);
+	ZVAL_NULL(val);
 }
 
 int _value_truth(zval *val) {

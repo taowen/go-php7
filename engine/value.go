@@ -23,7 +23,7 @@ import (
 // ValueKind represents the specific kind of type represented in Value.
 type ValueKind int
 
-// PHP types representable in Go.
+// ZVal types
 const (
 	IS_UNDEF ValueKind = 0
 	IS_NULL ValueKind = 1
@@ -36,27 +36,26 @@ const (
 	IS_OBJECT ValueKind = 8
 	IS_RESOURCE ValueKind = 9
 	IS_REFERENCE ValueKind = 10
-	Map =11
 )
 
 // Value represents a PHP value.
 type Value C.struct__zval_struct
 
- //NewValue creates a PHP value representation of a Go value val. Available
- //bindings for Go to PHP types are:
- //
-	//int             -> integer
-	//float64         -> double
-	//bool            -> boolean
-	//string          -> string
-	//slice           -> indexed array
-	//map[int|string] -> associative array
-	//struct          -> object
- //
- //It is only possible to bind maps with integer or string keys. Only exported
- //struct fields are passed to the PHP context. Bindings for functions and method
- //receivers to PHP functions and classes are only available in the engine scope,
- //and must be predeclared before context execution.
+//NewValue creates a PHP value representation of a Go value val. Available
+//bindings for Go to PHP types are:
+//
+//int             -> integer
+//float64         -> double
+//bool            -> boolean
+//string          -> string
+//slice           -> indexed array
+//map[int|string] -> associative array
+//struct          -> object
+//
+//It is only possible to bind maps with integer or string keys. Only exported
+//struct fields are passed to the PHP context. Bindings for functions and method
+//receivers to PHP functions and classes are only available in the engine scope,
+//and must be predeclared before context execution.
 func NewValue(val interface{}) (*C.struct__zval_struct, error) {
 	zval, err := C.value_new()
 	if err != nil {

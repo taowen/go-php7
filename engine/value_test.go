@@ -7,7 +7,6 @@ package engine
 import (
 	"reflect"
 	"testing"
-	"os"
 )
 
 var valueNewTests = []struct {
@@ -69,6 +68,7 @@ func TestValueNew(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
 	c, _ := e.NewContext()
+	defer c.Destroy()
 
 	for _, tt := range valueNewTests {
 		val, err := NewValue(tt.value)
@@ -77,7 +77,7 @@ func TestValueNew(t *testing.T) {
 			continue
 		}
 
-		if IsNull(val) {
+		if val == nil {
 			t.Errorf("NewValue('%v'): No error returned but value is `nil`", tt.value)
 			continue
 		}
@@ -90,19 +90,6 @@ func TestValueNew(t *testing.T) {
 
 		DestroyValue(val)
 	}
-
-	c.Destroy()
-}
-
-func TestCopy(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
-	c, _ := e.NewContext()
-	defer c.Destroy()
-	c.Output = os.Stdout
-	c.Bind("a", map[int]interface{}{10: "this"})
-	val, _ := c.Eval("return $a;")
-	defer DestroyValue(val)
 }
 
 var valueNewInvalidTests = []interface{}{
@@ -118,9 +105,13 @@ var valueNewInvalidTests = []interface{}{
 }
 
 func TestValueNewInvalid(t *testing.T) {
-	e, _ := New()
+	e, err := New()
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer e.Destroy()
 	c, _ := e.NewContext()
+	defer c.Destroy()
 
 	for _, value := range valueNewInvalidTests {
 		val, err := NewValue(value)
@@ -129,8 +120,6 @@ func TestValueNewInvalid(t *testing.T) {
 			t.Errorf("NewValue('%v'): Value is invalid but no error occured", value)
 		}
 	}
-
-	c.Destroy()
 }
 
 var valueKindTests = []struct {
@@ -163,7 +152,7 @@ var valueKindTests = []struct {
 	},
 	{
 		map[string]int{"t": 1, "c": 2},
-		Map,
+		IS_ARRAY,
 	},
 	{
 		struct {
@@ -239,6 +228,7 @@ func TestValueInt(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
 	c, _ := e.NewContext()
+	defer c.Destroy()
 
 	for _, tt := range valueIntTests {
 		val, err := NewValue(tt.value)
@@ -250,13 +240,11 @@ func TestValueInt(t *testing.T) {
 		actual := ToInt(val)
 
 		if reflect.DeepEqual(actual, tt.expected) == false {
-			t.Errorf("Value.Int('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
+			t.Errorf("ToInt('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
 		}
 
 		DestroyValue(val)
 	}
-
-	c.Destroy()
 }
 
 var valueFloatTests = []struct {
@@ -300,6 +288,7 @@ func TestValueFloat(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
 	c, _ := e.NewContext()
+	defer c.Destroy()
 
 	for _, tt := range valueFloatTests {
 		val, err := NewValue(tt.value)
@@ -311,13 +300,11 @@ func TestValueFloat(t *testing.T) {
 		actual := ToFloat(val)
 
 		if reflect.DeepEqual(actual, tt.expected) == false {
-			t.Errorf("Value.Float('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
+			t.Errorf("ToFloat('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
 		}
 
 		DestroyValue(val)
 	}
-
-	c.Destroy()
 }
 
 var valueBoolTests = []struct {
@@ -361,6 +348,7 @@ func TestValueBool(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
 	c, _ := e.NewContext()
+	defer c.Destroy()
 
 	for _, tt := range valueBoolTests {
 		val, err := NewValue(tt.value)
@@ -372,13 +360,11 @@ func TestValueBool(t *testing.T) {
 		actual := ToBool(val)
 
 		if reflect.DeepEqual(actual, tt.expected) == false {
-			t.Errorf("Value.Bool('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
+			t.Errorf("ToBool('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
 		}
 
 		DestroyValue(val)
 	}
-
-	c.Destroy()
 }
 
 var valueStringTests = []struct {
@@ -422,6 +408,7 @@ func TestValueString(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
 	c, _ := e.NewContext()
+	defer c.Destroy()
 
 	for _, tt := range valueStringTests {
 		val, err := NewValue(tt.value)
@@ -433,13 +420,11 @@ func TestValueString(t *testing.T) {
 		actual := ToString(val)
 
 		if reflect.DeepEqual(actual, tt.expected) == false {
-			t.Errorf("Value.String('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
+			t.Errorf("ToString('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
 		}
 
 		DestroyValue(val)
 	}
-
-	c.Destroy()
 }
 
 var valueSliceTests = []struct {
@@ -483,6 +468,7 @@ func TestValueSlice(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
 	c, _ := e.NewContext()
+	defer c.Destroy()
 
 	for _, tt := range valueSliceTests {
 		val, err := NewValue(tt.value)
@@ -494,13 +480,11 @@ func TestValueSlice(t *testing.T) {
 		actual := ToSlice(val)
 
 		if reflect.DeepEqual(actual, tt.expected) == false {
-			t.Errorf("Value.Slice('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
+			t.Errorf("ToSlice('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
 		}
 
 		DestroyValue(val)
 	}
-
-	c.Destroy()
 }
 
 var valueMapTests = []struct {
@@ -544,6 +528,7 @@ func TestValueMap(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
 	c, _ := e.NewContext()
+	defer c.Destroy()
 
 	for _, tt := range valueMapTests {
 		val, err := NewValue(tt.value)
@@ -555,13 +540,11 @@ func TestValueMap(t *testing.T) {
 		actual := ToMap(val)
 
 		if reflect.DeepEqual(actual, tt.expected) == false {
-			t.Errorf("Value.Map('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
+			t.Errorf("ToMap('%v'): expected '%#v', actual '%#v'", tt.value, tt.expected, actual)
 		}
 
 		DestroyValue(val)
 	}
-
-	c.Destroy()
 }
 
 func TestValueDestroy(t *testing.T) {
@@ -578,7 +561,7 @@ func TestValueDestroy(t *testing.T) {
 	DestroyValue(val)
 
 	if !IsNull(val) {
-		t.Errorf("Value.Destroy(): Did not set internal fields to `nil`")
+		t.Errorf("DestroyValue(): Did not set internal fields to `nil`")
 	}
 
 	// Attempting to destroy a value twice should be a no-op.
