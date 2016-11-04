@@ -16,7 +16,8 @@ import (
 func TestContextNew(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
-	c, err := e.NewContext()
+	c := &Context{}
+	err := e.RequestStartup(c)
 	if err != nil {
 		t.Fatalf("NewContext(): %s", err)
 	}
@@ -50,8 +51,10 @@ func TestContextExec(t *testing.T) {
 	defer e.Destroy()
 	var w bytes.Buffer
 
-	c, _ := e.NewContext()
-	c.Output = &w
+	c := &Context{
+		Output: &w,
+	}
+	e.RequestStartup(c)
 
 	for _, tt := range execTests {
 		script, err := NewScript(tt.name, tt.script)
@@ -100,8 +103,10 @@ func TestContextEval(t *testing.T) {
 	defer e.Destroy()
 	var w bytes.Buffer
 
-	c, _ := e.NewContext()
-	c.Output = &w
+	c := &Context{
+		Output: &w,
+	}
+	e.RequestStartup(c)
 
 	for _, tt := range evalTests {
 		val, err := c.Eval(tt.script)
@@ -154,7 +159,8 @@ var headerTests = []struct {
 func TestContextHeader(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
-	c, _ := e.NewContext()
+	c := &Context{}
+	e.RequestStartup(c)
 
 	for _, tt := range headerTests {
 		if _, err := c.Eval(tt.script); err != nil {
@@ -193,8 +199,10 @@ func TestContextLog(t *testing.T) {
 	defer e.Destroy()
 	var w bytes.Buffer
 
-	c, _ := e.NewContext()
-	c.Log = &w
+	c := &Context{
+		Log: &w,
+	}
+	e.RequestStartup(c)
 
 	for _, tt := range logTests {
 		if _, err := c.Eval(tt.script); err != nil {
@@ -265,8 +273,10 @@ func TestContextBind(t *testing.T) {
 	defer e.Destroy()
 	var w bytes.Buffer
 
-	c, _ := e.NewContext()
-	c.Output = &w
+	c := &Context{
+		Output: &w,
+	}
+	e.RequestStartup(c)
 
 	for i, tt := range bindTests {
 		if err := c.Bind(fmt.Sprintf("t%d", i), tt.value); err != nil {
@@ -293,7 +303,8 @@ func TestContextBind(t *testing.T) {
 func TestContextDestroy(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
-	c, _ := e.NewContext()
+	c := &Context{}
+	e.RequestStartup(c)
 	c.Destroy()
 
 	if c.context != nil {

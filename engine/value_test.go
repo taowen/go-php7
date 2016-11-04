@@ -67,7 +67,8 @@ var valueNewTests = []struct {
 func TestValueNew(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
-	c, _ := e.NewContext()
+	c := &Context{}
+	e.RequestStartup(c)
 	defer c.Destroy()
 
 	for _, tt := range valueNewTests {
@@ -110,7 +111,8 @@ func TestValueNewInvalid(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer e.Destroy()
-	c, _ := e.NewContext()
+	c := &Context{}
+	e.RequestStartup(c)
 	defer c.Destroy()
 
 	for _, value := range valueNewInvalidTests {
@@ -166,7 +168,9 @@ var valueKindTests = []struct {
 func TestValueKind(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
-	c, _ := e.NewContext()
+	c := &Context{}
+	e.RequestStartup(c)
+	defer c.Destroy()
 
 	for _, tt := range valueKindTests {
 		val, err := NewValue(tt.value)
@@ -183,8 +187,6 @@ func TestValueKind(t *testing.T) {
 
 		DestroyValue(val)
 	}
-
-	c.Destroy()
 }
 
 var valueIntTests = []struct {
@@ -227,7 +229,8 @@ var valueIntTests = []struct {
 func TestValueInt(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
-	c, _ := e.NewContext()
+	c := &Context{}
+	e.RequestStartup(c)
 	defer c.Destroy()
 
 	for _, tt := range valueIntTests {
@@ -287,7 +290,8 @@ var valueFloatTests = []struct {
 func TestValueFloat(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
-	c, _ := e.NewContext()
+	c := &Context{}
+	e.RequestStartup(c)
 	defer c.Destroy()
 
 	for _, tt := range valueFloatTests {
@@ -347,7 +351,8 @@ var valueBoolTests = []struct {
 func TestValueBool(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
-	c, _ := e.NewContext()
+	c := &Context{}
+	e.RequestStartup(c)
 	defer c.Destroy()
 
 	for _, tt := range valueBoolTests {
@@ -407,7 +412,8 @@ var valueStringTests = []struct {
 func TestValueString(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
-	c, _ := e.NewContext()
+	c := &Context{}
+	e.RequestStartup(c)
 	defer c.Destroy()
 
 	for _, tt := range valueStringTests {
@@ -467,7 +473,8 @@ var valueSliceTests = []struct {
 func TestValueSlice(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
-	c, _ := e.NewContext()
+	c := &Context{}
+	e.RequestStartup(c)
 	defer c.Destroy()
 
 	for _, tt := range valueSliceTests {
@@ -527,7 +534,8 @@ var valueMapTests = []struct {
 func TestValueMap(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
-	c, _ := e.NewContext()
+	c := &Context{}
+	e.RequestStartup(c)
 	defer c.Destroy()
 
 	for _, tt := range valueMapTests {
@@ -550,7 +558,8 @@ func TestValueMap(t *testing.T) {
 func TestValueDestroy(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
-	c, _ := e.NewContext()
+	c := &Context{}
+	e.RequestStartup(c)
 	defer c.Destroy()
 
 	val, err := NewValue(42)

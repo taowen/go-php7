@@ -55,7 +55,8 @@ func TestEngineNewContext(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer e.Destroy()
-	c, err := e.NewContext()
+	c := &Context{}
+	err = e.RequestStartup(c)
 	if err != nil {
 		t.Errorf("NewContext(): %s", err)
 	}

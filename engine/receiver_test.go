@@ -118,9 +118,11 @@ func TestReceiverDefine(t *testing.T) {
 	e, _ := New()
 	var w bytes.Buffer
 
-	c, _ := e.NewContext()
+	c := &Context{
+		Output: &w,
+	}
+	e.RequestStartup(c)
 	defer c.Destroy()
-	c.Output = &w
 
 	if err := e.Define("TestReceiver", newTestReceiver); err != nil {
 		t.Fatalf("Engine.Define(): Failed to define method receiver: %s", err)
@@ -151,7 +153,8 @@ func TestReceiverDefine(t *testing.T) {
 func TestReceiverDestroy(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
-	c, _ := e.NewContext()
+	c := &Context{}
+	e.RequestStartup(c)
 	defer c.Destroy()
 
 	r := e.receivers["TestReceiver"]

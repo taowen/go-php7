@@ -55,21 +55,19 @@ func New() (*Engine, error) {
 // NewContext creates a new execution context for the active engine and returns
 // an error if the execution context failed to initialize at any point. This
 // corresponds to PHP's RINIT (request init) phase.
-func (e *Engine) NewContext() (*Context, error) {
+func (e *Engine) RequestStartup(ctx *Context) error {
 	ptr, err := C.context_new()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to initialize context for PHP engine")
+		return fmt.Errorf("Failed to initialize context for PHP engine")
 	}
 
-	ctx := &Context{
-		Header:  make(http.Header),
-		context: ptr,
-	}
+	ctx.Header = make(http.Header)
+	ctx.context = ptr
 
 	// Store reference to context, using pointer as key.
 	e.contexts[ptr] = ctx
 
-	return ctx, nil
+	return nil
 }
 
 // Define registers a PHP class for the name passed, using function fn as
