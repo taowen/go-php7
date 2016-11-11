@@ -4,6 +4,9 @@ import (
 	"net/http/httptest"
 	"testing"
 	"net/http"
+	"net/url"
+	"bytes"
+	"strconv"
 )
 
 func Test_SERVER_REQUEST_URI(t *testing.T) {
@@ -41,6 +44,22 @@ func Test_SERVER_REQUEST_METHOD(t *testing.T) {
 		Request: httptest.NewRequest(http.MethodPost, "/hello", nil),
 	}, "return $_SERVER['REQUEST_METHOD'];", func(val evalAssertionArg) {
 		if ToString(val.val) != "POST" {
+			t.Fatal(ToString(val.val))
+		}
+	})
+}
+
+func Test_SERVER_HTTP_CONTENT_TYPE(t *testing.T) {
+	body := url.Values{}
+	body.Set("form_arg", "form_value")
+	bodyBytes := body.Encode()
+	req := httptest.NewRequest(http.MethodPost, "/hello", bytes.NewBufferString(bodyBytes))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Content-Length", strconv.Itoa(len(bodyBytes)))
+	evalAssert(&Context{
+		Request: req,
+	}, "return $_SERVER['HTTP_CONTENT_TYPE'];", func(val evalAssertionArg) {
+		if ToString(val.val) != "application/x-www-form-urlencoded" {
 			t.Fatal(ToString(val.val))
 		}
 	})

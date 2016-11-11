@@ -63,6 +63,9 @@ func (e *Engine) RequestStartup(ctx *Context) error {
 			"QUERY_STRING": ctx.Request.URL.RawQuery,
 			"REQUEST_METHOD": ctx.Request.Method,
 		}
+		for k, v := range ctx.Request.Header {
+			serverValues_["HTTP_" + strings.Replace(strings.ToUpper(k), "-", "_", -1)] = v[0]
+		}
 		serverValues, err := NewValue(serverValues_)
 		ctx.serverValues = serverValues
 		if err != nil {

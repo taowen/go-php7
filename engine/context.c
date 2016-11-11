@@ -29,6 +29,9 @@ engine_context *context_new(zval *server_values) {
 		zval request_method = value_array_key_get(context->server_values, "REQUEST_METHOD");
 		SG(request_info).request_method = Z_STRVAL(request_method);
 		zval_dtor(&request_method);
+		zval content_type = value_array_key_get(context->server_values, "HTTP_CONTENT_TYPE");
+		SG(request_info).content_type = Z_STRVAL(content_type);
+		zval_dtor(&content_type);
 	}
 	SG(server_context) = context;
 
