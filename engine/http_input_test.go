@@ -26,3 +26,13 @@ func Test_SERVER_QUERY_STRING(t *testing.T) {
 		}
 	})
 }
+
+func Test_GET(t *testing.T) {
+	evalAssert(&Context{
+		Request: httptest.NewRequest(http.MethodGet, "/hello?qs_arg=qs_value", nil),
+	}, "return $_GET['qs_arg'];", func(val evalAssertionArg) {
+		if ToString(val.val) != "qs_value" {
+			t.Fatal(ToString(val.val))
+		}
+	})
+}

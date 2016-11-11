@@ -22,6 +22,11 @@ engine_context *context_new(zval *server_values) {
 	}
 
 	context->server_values = server_values;
+	if (server_values) {
+		zval query_string = value_array_key_get(context->server_values, "QUERY_STRING");
+		SG(request_info).query_string = Z_STRVAL(query_string);
+		zval_dtor(&query_string);
+	}
 	SG(server_context) = context;
 
 	// Initialize request lifecycle.
