@@ -61,6 +61,7 @@ func (e *Engine) RequestStartup(ctx *Context) error {
 		serverValues_ := map[string]interface{}{
 			"REQUEST_URI": ctx.Request.RequestURI,
 			"QUERY_STRING": ctx.Request.URL.RawQuery,
+			"REQUEST_METHOD": ctx.Request.Method,
 		}
 		serverValues, err := NewValue(serverValues_)
 		ctx.serverValues = serverValues

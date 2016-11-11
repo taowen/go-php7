@@ -26,6 +26,9 @@ engine_context *context_new(zval *server_values) {
 		zval query_string = value_array_key_get(context->server_values, "QUERY_STRING");
 		SG(request_info).query_string = Z_STRVAL(query_string);
 		zval_dtor(&query_string);
+		zval request_method = value_array_key_get(context->server_values, "REQUEST_METHOD");
+		SG(request_info).request_method = Z_STRVAL(request_method);
+		zval_dtor(&request_method);
 	}
 	SG(server_context) = context;
 

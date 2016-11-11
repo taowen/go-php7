@@ -6,7 +6,6 @@ import (
 	"net/http"
 )
 
-
 func Test_SERVER_REQUEST_URI(t *testing.T) {
 	evalAssert(&Context{
 		Request: httptest.NewRequest(http.MethodGet, "/hello", nil),
@@ -32,6 +31,16 @@ func Test_GET(t *testing.T) {
 		Request: httptest.NewRequest(http.MethodGet, "/hello?qs_arg=qs_value", nil),
 	}, "return $_GET['qs_arg'];", func(val evalAssertionArg) {
 		if ToString(val.val) != "qs_value" {
+			t.Fatal(ToString(val.val))
+		}
+	})
+}
+
+func Test_SERVER_REQUEST_METHOD(t *testing.T) {
+	evalAssert(&Context{
+		Request: httptest.NewRequest(http.MethodPost, "/hello", nil),
+	}, "return $_SERVER['REQUEST_METHOD'];", func(val evalAssertionArg) {
+		if ToString(val.val) != "POST" {
 			t.Fatal(ToString(val.val))
 		}
 	})
