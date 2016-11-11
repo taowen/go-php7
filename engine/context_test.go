@@ -194,6 +194,21 @@ func TestStatusCode(t *testing.T) {
 	}
 }
 
+func TestHttpOutput(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
+	recorder := httptest.NewRecorder()
+	c := &Context{
+		ResponseWriter: recorder,
+	}
+	e.RequestStartup(c)
+	defer e.RequestShutdown(c)
+	c.Eval("echo('hello');")
+	if recorder.Body.String() != "hello" {
+		t.FailNow()
+	}
+}
+
 var logTests = []struct {
 	script   string
 	expected string

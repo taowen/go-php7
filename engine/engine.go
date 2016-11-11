@@ -18,6 +18,7 @@ import (
 	"io"
 	"strings"
 	"unsafe"
+	"bytes"
 )
 
 // Engine represents the core PHP engine bindings.
@@ -60,6 +61,9 @@ func (e *Engine) RequestStartup(ctx *Context) error {
 		return fmt.Errorf("Failed to initialize context for PHP engine")
 	}
 
+	if ctx.ResponseWriter != nil {
+		ctx.Output = &bytes.Buffer{}
+	}
 	ctx.context = ptr
 
 	// Store reference to context, using pointer as key.

@@ -14,6 +14,8 @@ import (
 	"io"
 	"net/http"
 	"unsafe"
+	"bytes"
+	"errors"
 )
 
 // Context represents an individual execution context.
@@ -59,8 +61,7 @@ func (c *Context) Exec(filename string) error {
 	if err != nil {
 		return fmt.Errorf("Error executing script '%s' in context", filename)
 	}
-	c.writeResponse()
-	return nil
+	return c.writeResponse()
 }
 
 // Eval executes the PHP expression contained in script, and returns a Value
@@ -74,13 +75,13 @@ func (c *Context) Eval(script string) (*C.struct__zval_struct, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error executing script '%s' in context", script)
 	}
-	c.writeResponse()
-	return &result, nil
+	err = c.writeResponse()
+	return &result, err
 }
 
-func (ctx *Context) writeResponse() {
+func (ctx *Context) writeResponse() error {
 	if ctx.ResponseWriter == nil {
-		return
+		return nil
 	}
 	response_code := int(C.context_get_response_code(ctx.context))
 	if response_code == 0 {
@@ -88,4 +89,14 @@ func (ctx *Context) writeResponse() {
 	} else {
 		ctx.ResponseWriter.WriteHeader(response_code);
 	}
+	outputBuffer := ctx.Output.(*bytes.Buffer)
+	outputBytes := outputBuffer.Bytes()
+	writeOut, err := ctx.ResponseWriter.Write(outputBytes)
+	if err != nil {
+		return errors.New(fmt.Sprintf("failed to write output: %s", err.Error()))
+	}
+	if writeOut != len(outputBytes) {
+		return errors.New("not all output write out")
+	}
+	return nil
 }
