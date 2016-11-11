@@ -64,3 +64,19 @@ func Test_SERVER_HTTP_CONTENT_TYPE(t *testing.T) {
 		}
 	})
 }
+
+func Test_SERVER_HTTP_CONTENT_LENGTH(t *testing.T) {
+	body := url.Values{}
+	body.Set("form_arg", "form_value")
+	bodyBytes := body.Encode()
+	req := httptest.NewRequest(http.MethodPost, "/hello", bytes.NewBufferString(bodyBytes))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Content-Length", strconv.Itoa(len(bodyBytes)))
+	evalAssert(&Context{
+		Request: req,
+	}, "return $_SERVER['HTTP_CONTENT_LENGTH'];", func(val evalAssertionArg) {
+		if ToInt(val.val) != int64(19) {
+			t.Fatal(ToInt(val.val))
+		}
+	})
+}

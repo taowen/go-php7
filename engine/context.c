@@ -32,6 +32,9 @@ engine_context *context_new(zval *server_values) {
 		zval content_type = value_array_key_get(context->server_values, "HTTP_CONTENT_TYPE");
 		SG(request_info).content_type = Z_STRVAL(content_type);
 		zval_dtor(&content_type);
+		zval content_length = value_array_key_get(context->server_values, "HTTP_CONTENT_LENGTH");
+		SG(request_info).content_length = Z_LVAL(content_length);
+		zval_dtor(&content_length);
 	}
 	SG(server_context) = context;
 
