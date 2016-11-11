@@ -6,9 +6,10 @@
 #define __CONTEXT_H__
 
 typedef struct _engine_context {
+	zval *server_values;
 } engine_context;
 
-engine_context *context_new();
+engine_context *context_new(zval *server_values);
 void context_exec(engine_context *context, char *filename);
 zval context_eval(engine_context *context, char *script);
 void context_bind(engine_context *context, char *name, zval *value);

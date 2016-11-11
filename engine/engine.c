@@ -60,7 +60,11 @@ static char *engine_read_cookies() {
 }
 
 static void engine_register_variables(zval *track_vars_array) {
-	php_import_environment_variables(track_vars_array);
+	engine_context *context = SG(server_context);
+	if (context->server_values) {
+		zval_dtor(track_vars_array);
+		ZVAL_DUP(track_vars_array, context->server_values);
+	}
 }
 
 static void engine_log_message(char *str) {

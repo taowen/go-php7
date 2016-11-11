@@ -93,6 +93,19 @@ func TestValueNew(t *testing.T) {
 	}
 }
 
+func TestNestedMap(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
+	c := &Context{}
+	e.RequestStartup(c)
+	defer e.RequestShutdown(c)
+
+	val, _ := NewValue(map[string]interface{}{
+		"REQUEST_URI": "/",
+	})
+	DestroyValue(val)
+}
+
 var valueNewInvalidTests = []interface{}{
 	uint(10),
 	make(chan int),

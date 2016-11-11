@@ -11,7 +11,7 @@
 #include "value.h"
 #include "context.h"
 
-engine_context *context_new() {
+engine_context *context_new(zval *server_values) {
 	engine_context *context;
 
 	// Initialize context.
@@ -21,6 +21,7 @@ engine_context *context_new() {
 		return NULL;
 	}
 
+	context->server_values = server_values;
 	SG(server_context) = context;
 
 	// Initialize request lifecycle.
@@ -96,6 +97,9 @@ void context_bind(engine_context *context, char *name, zval *value) {
 }
 
 void context_destroy(engine_context *context) {
+	if (context->server_values) {
+		zval_dtor(context->server_values);
+	}
 	php_request_shutdown(NULL);
 
 	SG(server_context) = NULL;

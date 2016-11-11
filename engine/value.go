@@ -252,5 +252,8 @@ func fillMap(val map[string]interface{}, k interface{}, v *C.struct__zval_struct
 // Destroy removes all active references to the internal PHP value and frees
 // any resources used.
 func DestroyValue(zval *C.struct__zval_struct) {
+	if zval == nil {
+		return
+	}
 	C._value_destroy(zval)
 }

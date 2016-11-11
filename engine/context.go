@@ -26,10 +26,12 @@ type Context struct {
 	Output io.Writer
 	Log    io.Writer
 
-	// Header represents the HTTP headers set by current PHP context.
+	// Http Input/Output
 	ResponseWriter http.ResponseWriter
+	Request *http.Request
 
 	context *C.struct__engine_context
+	serverValues *C.struct__zval_struct
 }
 
 // Bind allows for binding Go values into the current execution context under

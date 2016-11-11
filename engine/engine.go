@@ -19,6 +19,7 @@ import (
 	"strings"
 	"unsafe"
 	"bytes"
+	"errors"
 )
 
 // Engine represents the core PHP engine bindings.
@@ -56,26 +57,32 @@ func New() (*Engine, error) {
 // an error if the execution context failed to initialize at any point. This
 // corresponds to PHP's RINIT (request init) phase.
 func (e *Engine) RequestStartup(ctx *Context) error {
-	ptr, err := C.context_new()
+	if ctx.Request != nil {
+		serverValues_ := map[string]interface{}{
+			"REQUEST_URI": ctx.Request.RequestURI,
+		}
+		serverValues, err := NewValue(serverValues_)
+		ctx.serverValues = serverValues
+		if err != nil {
+			return errors.New(fmt.Sprintf("failed to create server values: %s", err.Error()))
+		}
+	}
+	ptr, err := C.context_new(ctx.serverValues)
 	if err != nil {
 		return fmt.Errorf("Failed to initialize context for PHP engine")
 	}
-
+	ctx.context = ptr
+	// Store reference to context, using pointer as key.
+	e.contexts[ptr] = ctx
 	if ctx.ResponseWriter != nil {
 		ctx.Output = &bytes.Buffer{}
 	}
-	ctx.context = ptr
-
-	// Store reference to context, using pointer as key.
-	e.contexts[ptr] = ctx
-
 	return nil
 }
 
 // Destroy tears down the current execution context
 // corresponds to PHP's RSHUTDOWN phase
 func (e *Engine) RequestShutdown(ctx *Context) {
-
 	if ctx.context == nil {
 		return
 	}

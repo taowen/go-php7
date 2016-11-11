@@ -209,6 +209,24 @@ func TestHttpOutput(t *testing.T) {
 	}
 }
 
+func TestHttpGet(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
+	c := &Context{
+		Request: httptest.NewRequest("GET", "/", nil),
+	}
+	err := e.RequestStartup(c)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer e.RequestShutdown(c)
+	requestUri, _ := c.Eval("return $_SERVER['REQUEST_URI'];")
+	defer DestroyValue(requestUri)
+	if ToString(requestUri) != "/" {
+		t.FailNow()
+	}
+}
+
 var logTests = []struct {
 	script   string
 	expected string
