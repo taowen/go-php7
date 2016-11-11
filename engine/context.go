@@ -16,6 +16,7 @@ import (
 	"unsafe"
 	"bytes"
 	"errors"
+	"os"
 )
 
 // Context represents an individual execution context.
@@ -101,4 +102,30 @@ func (ctx *Context) writeResponse() error {
 		return errors.New("not all output write out")
 	}
 	return nil
+}
+
+
+type evalAssertionArg struct {
+	val *C.struct__zval_struct
+}
+type evalAssertion func(val evalAssertionArg)
+
+func evalAssert(ctx *Context, script string, assertion evalAssertion) {
+	theEngine, err := New()
+	if err != nil {
+		panic(err)
+	}
+	defer theEngine.Destroy()
+	ctx.Output = os.Stdout
+	err = engine.RequestStartup(ctx)
+	if err != nil {
+		panic(err)
+	}
+	defer engine.RequestShutdown(ctx)
+	val, err := ctx.Eval(script)
+	if err != nil {
+		panic(err)
+	}
+	defer DestroyValue(val)
+	assertion(evalAssertionArg{val})
 }

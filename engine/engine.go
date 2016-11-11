@@ -60,6 +60,7 @@ func (e *Engine) RequestStartup(ctx *Context) error {
 	if ctx.Request != nil {
 		serverValues_ := map[string]interface{}{
 			"REQUEST_URI": ctx.Request.RequestURI,
+			"QUERY_STRING": ctx.Request.URL.RawQuery,
 		}
 		serverValues, err := NewValue(serverValues_)
 		ctx.serverValues = serverValues
