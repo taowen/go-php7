@@ -179,6 +179,21 @@ func TestContextHeader(t *testing.T) {
 	e.RequestShutdown(c)
 }
 
+func TestStatusCode(t *testing.T) {
+	e, _ := New()
+	defer e.Destroy()
+	recorder := httptest.NewRecorder()
+	c := &Context{
+		ResponseWriter: recorder,
+	}
+	e.RequestStartup(c)
+	defer e.RequestShutdown(c)
+	c.Eval("http_response_code(400);")
+	if recorder.Code != 400 {
+		t.FailNow()
+	}
+}
+
 var logTests = []struct {
 	script   string
 	expected string

@@ -102,4 +102,8 @@ void context_destroy(engine_context *context) {
 	free(context);
 }
 
+int context_get_response_code(engine_context *context) {
+	return SG(sapi_headers).http_response_code;
+}
+
 #include "_context.c"

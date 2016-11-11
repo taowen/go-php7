@@ -59,7 +59,7 @@ func (c *Context) Exec(filename string) error {
 	if err != nil {
 		return fmt.Errorf("Error executing script '%s' in context", filename)
 	}
-
+	c.writeResponse()
 	return nil
 }
 
@@ -74,6 +74,18 @@ func (c *Context) Eval(script string) (*C.struct__zval_struct, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error executing script '%s' in context", script)
 	}
-
+	c.writeResponse()
 	return &result, nil
+}
+
+func (ctx *Context) writeResponse() {
+	if ctx.ResponseWriter == nil {
+		return
+	}
+	response_code := int(C.context_get_response_code(ctx.context))
+	if response_code == 0 {
+		ctx.ResponseWriter.WriteHeader(200);
+	} else {
+		ctx.ResponseWriter.WriteHeader(response_code);
+	}
 }
