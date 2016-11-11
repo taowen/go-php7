@@ -1,4 +1,4 @@
-// Copyright 2016 Alexander Palaistras. All rights reserved.
+//home/xiaoju/workspace/go-php/ Copyright 2016 Alexander Palaistras. All rights reserved.
 // Use of this source code is governed by the MIT license that can be found in
 // the LICENSE file.
 
@@ -25,7 +25,7 @@ type Context struct {
 	Log    io.Writer
 
 	// Header represents the HTTP headers set by current PHP context.
-	Header http.Header
+	ResponseWriter http.ResponseWriter
 
 	context *C.struct__engine_context
 }

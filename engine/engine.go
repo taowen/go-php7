@@ -16,7 +16,6 @@ import "C"
 import (
 	"fmt"
 	"io"
-	"net/http"
 	"strings"
 	"unsafe"
 )
@@ -61,7 +60,6 @@ func (e *Engine) RequestStartup(ctx *Context) error {
 		return fmt.Errorf("Failed to initialize context for PHP engine")
 	}
 
-	ctx.Header = make(http.Header)
 	ctx.context = ptr
 
 	// Store reference to context, using pointer as key.
@@ -182,18 +180,23 @@ func engineSetHeader(ctx *C.struct__engine_context, operation C.uint, buffer uns
 		split[i] = strings.TrimSpace(split[i])
 	}
 
+	context := engine.contexts[ctx]
+	if context.ResponseWriter == nil {
+		return
+	}
+	httpHeader := context.ResponseWriter.Header()
 	switch operation {
 	case 0: // Replace header.
 		if len(split) == 2 && split[1] != "" {
-			engine.contexts[ctx].Header.Set(split[0], split[1])
+			httpHeader.Set(split[0], split[1])
 		}
 	case 1: // Append header.
 		if len(split) == 2 && split[1] != "" {
-			engine.contexts[ctx].Header.Add(split[0], split[1])
+			httpHeader.Add(split[0], split[1])
 		}
 	case 2: // Delete header.
 		if split[0] != "" {
-			engine.contexts[ctx].Header.Del(split[0])
+			httpHeader.Del(split[0])
 		}
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"net/http/httptest"
 )
 
 func TestContextNew(t *testing.T) {
@@ -22,7 +23,7 @@ func TestContextNew(t *testing.T) {
 		t.Fatalf("NewContext(): %s", err)
 	}
 
-	if c.context == nil || c.Header == nil {
+	if c.context == nil || c.ResponseWriter == nil {
 		t.Fatalf("NewContext(): Struct fields are `nil` but no error returned")
 	}
 
@@ -159,7 +160,9 @@ var headerTests = []struct {
 func TestContextHeader(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()
-	c := &Context{}
+	c := &Context{
+		ResponseWriter: httptest.NewRecorder(),
+	}
 	e.RequestStartup(c)
 
 	for _, tt := range headerTests {
@@ -168,8 +171,8 @@ func TestContextHeader(t *testing.T) {
 			continue
 		}
 
-		if reflect.DeepEqual(c.Header, tt.expected) == false {
-			t.Errorf("Context.Eval('%s'): expected '%#v', actual '%#v'", tt.script, tt.expected, c.Header)
+		if reflect.DeepEqual(c.ResponseWriter.Header(), tt.expected) == false {
+			t.Errorf("Context.Eval('%s'): expected '%#v', actual '%#v'", tt.script, tt.expected, c.ResponseWriter.Header())
 		}
 	}
 
