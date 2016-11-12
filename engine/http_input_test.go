@@ -195,3 +195,15 @@ func Test_SERVER_SCRIPT_FILENAME(t *testing.T) {
 		}
 	})
 }
+
+func Test_SERVER_SCRIPT_NAME(t *testing.T) {
+	evalAssert(&Context{
+		Request: httptest.NewRequest(http.MethodGet, "/hello", nil),
+		DocumentRoot: "/docroot",
+		ScriptFileName: "/docroot/index.php",
+	}, "return $_SERVER['SCRIPT_NAME'];", func(val evalAssertionArg) {
+		if ToString(val.val) != "/index.php" {
+			t.Fatal(ToString(val.val))
+		}
+	})
+}

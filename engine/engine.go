@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"errors"
 	"strconv"
+	"path/filepath"
 )
 
 // Engine represents the core PHP engine bindings.
@@ -60,12 +61,19 @@ func New() (*Engine, error) {
 func (e *Engine) RequestStartup(ctx *Context) error {
 	var serverValues *C.struct__zval_struct
 	if ctx.Request != nil {
+		scriptName, err := filepath.Rel(ctx.DocumentRoot, ctx.ScriptFileName)
+		if err != nil {
+			scriptName = ""
+		} else {
+			scriptName = "/" + scriptName
+		}
 		serverValues_ := map[string]interface{}{
 			"REQUEST_URI": ctx.Request.RequestURI,
 			"QUERY_STRING": ctx.Request.URL.RawQuery,
 			"REQUEST_METHOD": ctx.Request.Method,
 			"DOCUMENT_ROOT": ctx.DocumentRoot,
 			"SCRIPT_FILENAME": ctx.ScriptFileName,
+			"SCRIPT_NAME": scriptName,
 		}
 		for k, v := range ctx.Request.Header {
 			serverValues_["HTTP_" + strings.Replace(strings.ToUpper(k), "-", "_", -1)] = v[0]
@@ -79,7 +87,6 @@ func (e *Engine) RequestStartup(ctx *Context) error {
 				serverValues_["HTTP_CONTENT_LENGTH"] = contentLengthAsInt
 			}
 		}
-		var err error
 		serverValues, err = NewValue(serverValues_)
 		if err != nil {
 			return errors.New(fmt.Sprintf("failed to create server values: %s", err.Error()))
