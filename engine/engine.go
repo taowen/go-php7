@@ -136,7 +136,6 @@ func (e *Engine) RequestShutdown(ctx *Context) {
 	if ctx.context == nil {
 		return
 	}
-	ctx.FinishRequest()
 	delete(e.contexts, ctx.context)
 	C.context_destroy(ctx.context)
 	ctx.context = nil

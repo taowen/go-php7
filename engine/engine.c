@@ -27,6 +27,7 @@ const char engine_ini_defaults[] = {
 	"error_log = \"/tmp/php-error.log\"\n"
 	"max_input_time = -1\n\0"
 };
+static zend_module_entry engine_module_entry;
 
 static int engine_ub_write(const char *str, uint len) {
 	engine_context *context = SG(server_context);
@@ -83,6 +84,23 @@ static void engine_log_message(char *str) {
 	engineWriteLog(context, (void *) str, strlen(str));
 }
 
+PHP_FUNCTION(fastcgi_finish_request) /* {{{ */
+{
+	engine_context *context = SG(server_context);
+	if (context->is_finished) {
+		RETURN_FALSE;
+	}
+	sapi_send_headers();
+	php_output_end_all();
+	context->is_finished = 1;
+	RETURN_TRUE;
+}
+
+static const zend_function_entry engine_sapi_functions[] = {
+	PHP_FE(fastcgi_finish_request,              NULL)
+	{NULL, NULL, NULL}
+};
+
 static sapi_module_struct engine_module = {
 	"gophp-engine",              // Name
 	"Go PHP Engine Library",     // Pretty Name
@@ -128,6 +146,7 @@ php_engine *engine_init(void) {
 
 	engine_module.ini_entries = malloc(sizeof(engine_ini_defaults));
 	memcpy(engine_module.ini_entries, engine_ini_defaults, sizeof(engine_ini_defaults));
+	engine_module.additional_functions = engine_sapi_functions;
 
 	if (php_module_startup(&engine_module, NULL, 0) == FAILURE) {
 		sapi_shutdown();

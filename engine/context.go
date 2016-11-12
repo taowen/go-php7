@@ -7,6 +7,7 @@ package engine
 // #include <stdlib.h>
 // #include <main/php.h>
 // #include "context.h"
+// #include "engine.h"
 import "C"
 
 import (
@@ -107,8 +108,17 @@ func (ctx *Context) writeResponse() error {
 	return nil
 }
 
-func (ctx *Context) FinishRequest() {
-	C.context_finish_request(ctx.context)
+func (ctx *Context) FinishRequest() error {
+	result, err := ctx.Eval("return fastcgi_finish_request();")
+	if err != nil {
+		return err
+	}
+	defer DestroyValue(result)
+	if ToBool(result) {
+		return nil
+	} else {
+		return errors.New("failed to finish request")
+	}
 }
 
 

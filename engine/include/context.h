@@ -6,6 +6,7 @@
 #define __CONTEXT_H__
 
 typedef struct _engine_context {
+	int is_finished;
 	zval server_values;
 	zval query_string;
 	zval request_method;
@@ -20,7 +21,6 @@ zval context_eval(engine_context *context, char *script);
 void context_bind(engine_context *context, char *name, zval *value);
 void context_destroy(engine_context *context);
 int context_get_response_code(engine_context *context);
-void context_finish_request(engine_context *context);
 
 #include "_context.h"
 

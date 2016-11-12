@@ -20,6 +20,7 @@ engine_context *context_new(zval *server_values) {
 		errno = 1;
 		return NULL;
 	}
+	context->is_finished = 0;
 
 	if (server_values) {
 		zval query_string = value_array_key_get(server_values, "QUERY_STRING");
@@ -131,10 +132,6 @@ void context_destroy(engine_context *context) {
 
 int context_get_response_code(engine_context *context) {
 	return SG(sapi_headers).http_response_code;
-}
-
-void context_finish_request(engine_context *context) {
-	php_output_end_all();
 }
 
 #include "_context.c"
