@@ -67,6 +67,12 @@ func (e *Engine) RequestStartup(ctx *Context) error {
 		} else {
 			scriptName = "/" + scriptName
 		}
+		remoteAddrParts := strings.SplitN(ctx.Request.RemoteAddr, ":", 2)
+		remoteAddr := remoteAddrParts[0]
+		remotePort := ""
+		if len(remoteAddrParts) == 2 {
+			remotePort = remoteAddrParts[1]
+		}
 		serverValues_ := map[string]interface{}{
 			"REQUEST_URI": ctx.Request.RequestURI,
 			"QUERY_STRING": ctx.Request.URL.RawQuery,
@@ -74,6 +80,9 @@ func (e *Engine) RequestStartup(ctx *Context) error {
 			"DOCUMENT_ROOT": ctx.DocumentRoot,
 			"SCRIPT_FILENAME": ctx.ScriptFileName,
 			"SCRIPT_NAME": scriptName,
+			"PHP_SELF": scriptName,
+			"REMOTE_ADDR": remoteAddr,
+			"REMOTE_PORT": remotePort,
 		}
 		for k, v := range ctx.Request.Header {
 			serverValues_["HTTP_" + strings.Replace(strings.ToUpper(k), "-", "_", -1)] = v[0]

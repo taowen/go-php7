@@ -207,3 +207,27 @@ func Test_SERVER_SCRIPT_NAME(t *testing.T) {
 		}
 	})
 }
+
+func Test_SERVER_REMOTE_ADDR(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/hello", nil)
+	req.RemoteAddr = "1.2.3.4:5555"
+	evalAssert(&Context{
+		Request: req,
+	}, "return $_SERVER['REMOTE_ADDR'];", func(val evalAssertionArg) {
+		if ToString(val.val) != "1.2.3.4" {
+			t.Fatal(ToString(val.val))
+		}
+	})
+}
+
+func Test_SERVER_REMOTE_PORT(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/hello", nil)
+	req.RemoteAddr = "1.2.3.4:5555"
+	evalAssert(&Context{
+		Request: req,
+	}, "return $_SERVER['REMOTE_PORT'];", func(val evalAssertionArg) {
+		if ToString(val.val) != "5555" {
+			t.Fatal(ToString(val.val))
+		}
+	})
+}
