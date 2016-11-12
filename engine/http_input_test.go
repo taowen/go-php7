@@ -172,3 +172,20 @@ func Test_COOKIE(t *testing.T) {
 		}
 	})
 }
+
+func Test_SERVER_DOCUMENT_ROOT(t *testing.T) {
+	//should := assert.New(t)
+	//req := newContextRequest(http.MethodGet, "/hello", nil)
+	//req.DocumentRoot = "/docroot"
+	//evalAssert(req, "return $_SERVER['DOCUMENT_ROOT'];", func(val *engine.Value) {
+	//	should.Equal("/docroot", val.String())
+	//})
+	evalAssert(&Context{
+		Request: httptest.NewRequest(http.MethodGet, "/hello", nil),
+		DocumentRoot: "/docroot",
+	}, "return $_SERVER['DOCUMENT_ROOT'];", func(val evalAssertionArg) {
+		if ToString(val.val) != "/docroot" {
+			t.Fatal(ToString(val.val))
+		}
+	})
+}

@@ -31,6 +31,9 @@ type Context struct {
 	ResponseWriter http.ResponseWriter
 	Request *http.Request
 
+	// Other variables in $_SERVER
+	DocumentRoot string
+
 	context *C.struct__engine_context
 }
 
