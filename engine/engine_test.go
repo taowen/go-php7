@@ -87,6 +87,24 @@ func TestEngineDefine(t *testing.T) {
 	}
 }
 
+func TestPhpIni(t *testing.T) {
+	ioutil.WriteFile("/tmp/php.ini", []byte("post_max_size = 16M"), 0666)
+	PHP_INI_PATH_OVERRIDE = "/tmp/php.ini"
+	defer func() {
+		PHP_INI_PATH_OVERRIDE = ""
+	}()
+	e, _ := New()
+	defer e.Destroy()
+	c := &Context{}
+	e.RequestStartup(c)
+	defer e.RequestShutdown(c)
+	val, _ := c.Eval("return ini_get('post_max_size');")
+	defer DestroyValue(val)
+	if ToString(val) != "16M" {
+		t.FailNow()
+	}
+}
+
 func TestEngineDestroy(t *testing.T) {
 	e, _ := New()
 	defer e.Destroy()

@@ -8,7 +8,7 @@
 typedef struct _php_engine {
 } php_engine;
 
-php_engine *engine_init(void);
+php_engine *engine_init(char *php_ini_path_override);
 void engine_shutdown(php_engine *engine);
 
 #include "_engine.h"

@@ -32,6 +32,7 @@ type Engine struct {
 
 // This contains a reference to the active engine, if any.
 var engine *Engine
+var PHP_INI_PATH_OVERRIDE string
 
 // New initializes a PHP engine instance on which contexts can be executed. It
 // corresponds to PHP's MINIT (module init) phase.
@@ -40,7 +41,11 @@ func New() (*Engine, error) {
 		return nil, fmt.Errorf("Cannot activate multiple engine instances")
 	}
 
-	ptr, err := C.engine_init()
+	var phpInitPathOverride *C.char
+	if PHP_INI_PATH_OVERRIDE != "" {
+		phpInitPathOverride = C.CString(PHP_INI_PATH_OVERRIDE)
+	}
+	ptr, err := C.engine_init(phpInitPathOverride)
 	if err != nil {
 		return nil, fmt.Errorf("PHP engine failed to initialize")
 	}
