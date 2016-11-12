@@ -10,6 +10,7 @@ typedef struct _engine_context {
 	zval query_string;
 	zval request_method;
 	zval content_type;
+	zval http_cookie;
 } engine_context;
 
 engine_context *context_new(zval *server_values);

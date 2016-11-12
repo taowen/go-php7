@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"strconv"
 	"mime/multipart"
+	"time"
 )
 
 func Test_SERVER_REQUEST_URI(t *testing.T) {
@@ -122,7 +123,6 @@ func Test_POST_multipart_value(t *testing.T) {
 	})
 }
 
-
 func Test_FILE(t *testing.T) {
 	b := bytes.Buffer{}
 	w := multipart.NewWriter(&b)
@@ -152,6 +152,22 @@ func Test_FILE(t *testing.T) {
 		Request: req,
 	}, "return file_get_contents($_FILES['mp_file']['tmp_name']);", func(val evalAssertionArg) {
 		if ToString(val.val) != "mp_value" {
+			t.Fatal(ToString(val.val))
+		}
+	})
+}
+
+func Test_COOKIE(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/hello", nil)
+	req.AddCookie(&http.Cookie{
+		Name:    "cookie_arg",
+		Expires: time.Now(),
+		Value:   "cookie_value",
+	})
+	evalAssert(&Context{
+		Request: req,
+	}, "return $_COOKIE['cookie_arg'];", func(val evalAssertionArg) {
+		if ToString(val.val) != "cookie_value" {
 			t.Fatal(ToString(val.val))
 		}
 	})

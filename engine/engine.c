@@ -62,6 +62,10 @@ static size_t engine_read_post(char *buffer, size_t count_bytes) {
 }
 
 static char *engine_read_cookies() {
+	engine_context *context = SG(server_context);
+	if (Z_TYPE(context->http_cookie) == IS_STRING) {
+		return Z_STRVAL(context->http_cookie);
+	}
 	return NULL;
 }
 

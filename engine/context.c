@@ -34,6 +34,7 @@ engine_context *context_new(zval *server_values) {
 		zval content_length = value_array_key_get(server_values, "HTTP_CONTENT_LENGTH");
 		SG(request_info).content_length = Z_LVAL(content_length);
 		context->server_values = *server_values;
+		context->http_cookie = value_array_key_get(server_values, "HTTP_COOKIE");
 	} else {
 		ZVAL_NULL(&context->server_values);
 	}
@@ -47,6 +48,7 @@ void context_dtor(engine_context *context) {
 	zval_dtor(&context->query_string);
 	zval_dtor(&context->request_method);
 	zval_dtor(&context->content_type);
+	zval_dtor(&context->http_cookie);
 }
 
 void context_startup(engine_context *context) {
