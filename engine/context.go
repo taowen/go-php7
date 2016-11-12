@@ -107,6 +107,10 @@ func (ctx *Context) writeResponse() error {
 	return nil
 }
 
+func (ctx *Context) FinishRequest() {
+	C.context_finish_request(ctx.context)
+}
+
 
 type evalAssertionArg struct {
 	val *C.struct__zval_struct

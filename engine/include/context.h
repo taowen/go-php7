@@ -20,6 +20,7 @@ zval context_eval(engine_context *context, char *script);
 void context_bind(engine_context *context, char *name, zval *value);
 void context_destroy(engine_context *context);
 int context_get_response_code(engine_context *context);
+void context_finish_request(engine_context *context);
 
 #include "_context.h"
 

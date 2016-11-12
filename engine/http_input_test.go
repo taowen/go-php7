@@ -243,3 +243,27 @@ func Test_SERVER_HTTP_HOST(t *testing.T) {
 		}
 	})
 }
+
+func Test_SERVER_SERVER_NAME(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/hello", nil)
+	req.Host = "1.2.3.4:5555"
+	evalAssert(&Context{
+		Request: req,
+	}, "return $_SERVER['SERVER_NAME'];", func(val evalAssertionArg) {
+		if ToString(val.val) != "1.2.3.4" {
+			t.Fatal(ToString(val.val))
+		}
+	})
+}
+
+func Test_SERVER_SERVER_PORT(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/hello", nil)
+	req.Host = "1.2.3.4:5555"
+	evalAssert(&Context{
+		Request: req,
+	}, "return $_SERVER['SERVER_PORT'];", func(val evalAssertionArg) {
+		if ToString(val.val) != "5555" {
+			t.Fatal(ToString(val.val))
+		}
+	})
+}

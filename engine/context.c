@@ -133,4 +133,8 @@ int context_get_response_code(engine_context *context) {
 	return SG(sapi_headers).http_response_code;
 }
 
+void context_finish_request(engine_context *context) {
+	php_output_end_all();
+}
+
 #include "_context.c"

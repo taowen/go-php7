@@ -73,6 +73,12 @@ func (e *Engine) RequestStartup(ctx *Context) error {
 		if len(remoteAddrParts) == 2 {
 			remotePort = remoteAddrParts[1]
 		}
+		httpHostParts := strings.SplitN(ctx.Request.Host, ":", 2)
+		serverName := httpHostParts[0]
+		serverPort := ""
+		if len(httpHostParts) == 2 {
+			serverPort = httpHostParts[1]
+		}
 		serverValues_ := map[string]interface{}{
 			"REQUEST_URI": ctx.Request.RequestURI,
 			"QUERY_STRING": ctx.Request.URL.RawQuery,
@@ -84,6 +90,8 @@ func (e *Engine) RequestStartup(ctx *Context) error {
 			"REMOTE_ADDR": remoteAddr,
 			"REMOTE_PORT": remotePort,
 			"HTTP_HOST": ctx.Request.Host,
+			"SERVER_NAME": serverName,
+			"SERVER_PORT": serverPort,
 		}
 		for k, v := range ctx.Request.Header {
 			serverValues_["HTTP_" + strings.Replace(strings.ToUpper(k), "-", "_", -1)] = v[0]
@@ -128,6 +136,7 @@ func (e *Engine) RequestShutdown(ctx *Context) {
 	if ctx.context == nil {
 		return
 	}
+	ctx.FinishRequest()
 	delete(e.contexts, ctx.context)
 	C.context_destroy(ctx.context)
 	ctx.context = nil
