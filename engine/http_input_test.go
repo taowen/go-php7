@@ -121,3 +121,38 @@ func Test_POST_multipart_value(t *testing.T) {
 		}
 	})
 }
+
+
+func Test_FILE(t *testing.T) {
+	b := bytes.Buffer{}
+	w := multipart.NewWriter(&b)
+	fw, err := w.CreateFormFile("mp_file", "test.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = fw.Write([]byte("mp_value"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	w.Close()
+	req := httptest.NewRequest(http.MethodPost, "/hello", bytes.NewBuffer(b.Bytes()))
+	req.Header.Add("Content-Type", w.FormDataContentType())
+	req.Header.Add("Content-Length", strconv.Itoa(b.Len()))
+	evalAssert(&Context{
+		Request: req,
+	}, "return $_FILES['mp_file']['name'];", func(val evalAssertionArg) {
+		if ToString(val.val) != "test.txt" {
+			t.Fatal(ToString(val.val))
+		}
+	})
+	req = httptest.NewRequest(http.MethodPost, "/hello", bytes.NewBuffer(b.Bytes()))
+	req.Header.Add("Content-Type", w.FormDataContentType())
+	req.Header.Add("Content-Length", strconv.Itoa(b.Len()))
+	evalAssert(&Context{
+		Request: req,
+	}, "return file_get_contents($_FILES['mp_file']['tmp_name']);", func(val evalAssertionArg) {
+		if ToString(val.val) != "mp_value" {
+			t.Fatal(ToString(val.val))
+		}
+	})
+}
