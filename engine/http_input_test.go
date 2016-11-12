@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"bytes"
 	"strconv"
+	"mime/multipart"
 )
 
 func Test_SERVER_REQUEST_URI(t *testing.T) {
@@ -92,6 +93,30 @@ func Test_POST_form_urlencoded(t *testing.T) {
 		Request: req,
 	}, "return $_POST['form_arg'];", func(val evalAssertionArg) {
 		if ToString(val.val) != "form_value" {
+			t.Fatal(ToString(val.val))
+		}
+	})
+}
+
+func Test_POST_multipart_value(t *testing.T) {
+	b := bytes.Buffer{}
+	w := multipart.NewWriter(&b)
+	fw, err := w.CreateFormField("mp_arg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = fw.Write([]byte("mp_value"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	w.Close()
+	req := httptest.NewRequest(http.MethodPost, "/hello", &b)
+	req.Header.Add("Content-Type", w.FormDataContentType())
+	req.Header.Add("Content-Length", strconv.Itoa(b.Len()))
+	evalAssert(&Context{
+		Request: req,
+	}, "return $_POST['mp_arg'];", func(val evalAssertionArg) {
+		if ToString(val.val) != "mp_value" {
 			t.Fatal(ToString(val.val))
 		}
 	})
