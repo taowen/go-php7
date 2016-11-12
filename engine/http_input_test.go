@@ -231,3 +231,15 @@ func Test_SERVER_REMOTE_PORT(t *testing.T) {
 		}
 	})
 }
+
+func Test_SERVER_HTTP_HOST(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/hello", nil)
+	req.Host = "1.2.3.4:5555"
+	evalAssert(&Context{
+		Request: req,
+	}, "return $_SERVER['HTTP_HOST'];", func(val evalAssertionArg) {
+		if ToString(val.val) != "1.2.3.4:5555" {
+			t.Fatal(ToString(val.val))
+		}
+	})
+}

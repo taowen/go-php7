@@ -83,6 +83,7 @@ func (e *Engine) RequestStartup(ctx *Context) error {
 			"PHP_SELF": scriptName,
 			"REMOTE_ADDR": remoteAddr,
 			"REMOTE_PORT": remotePort,
+			"HTTP_HOST": ctx.Request.Host,
 		}
 		for k, v := range ctx.Request.Header {
 			serverValues_["HTTP_" + strings.Replace(strings.ToUpper(k), "-", "_", -1)] = v[0]
