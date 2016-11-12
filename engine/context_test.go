@@ -7,11 +7,9 @@ package engine
 import (
 	"bytes"
 	"fmt"
-	"net/http"
 	"reflect"
 	"strings"
 	"testing"
-	"net/http/httptest"
 )
 
 func TestContextNew(t *testing.T) {
@@ -135,79 +133,6 @@ func TestContextEval(t *testing.T) {
 	e.RequestShutdown(c)
 }
 
-var headerTests = []struct {
-	script   string
-	expected http.Header
-}{
-	{
-		"header('X-Testing: Hello');",
-		http.Header{"X-Testing": []string{"Hello"}},
-	},
-	{
-		"header('X-Testing: World', false);",
-		http.Header{"X-Testing": []string{"Hello", "World"}},
-	},
-	{
-		"header_remove('X-Testing');",
-		http.Header{},
-	},
-	{
-		"header('X-Testing: Done', false);",
-		http.Header{"X-Testing": []string{"Done"}},
-	},
-}
-
-func TestContextHeader(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
-	c := &Context{
-		ResponseWriter: httptest.NewRecorder(),
-	}
-	e.RequestStartup(c)
-
-	for _, tt := range headerTests {
-		if _, err := c.Eval(tt.script); err != nil {
-			t.Errorf("Context.Eval('%s'): %s", tt.script, err)
-			continue
-		}
-
-		if reflect.DeepEqual(c.ResponseWriter.Header(), tt.expected) == false {
-			t.Errorf("Context.Eval('%s'): expected '%#v', actual '%#v'", tt.script, tt.expected, c.ResponseWriter.Header())
-		}
-	}
-
-	e.RequestShutdown(c)
-}
-
-func TestStatusCode(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
-	recorder := httptest.NewRecorder()
-	c := &Context{
-		ResponseWriter: recorder,
-	}
-	e.RequestStartup(c)
-	defer e.RequestShutdown(c)
-	c.Eval("http_response_code(400);")
-	if recorder.Code != 400 {
-		t.FailNow()
-	}
-}
-
-func TestHttpOutput(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
-	recorder := httptest.NewRecorder()
-	c := &Context{
-		ResponseWriter: recorder,
-	}
-	e.RequestStartup(c)
-	defer e.RequestShutdown(c)
-	c.Eval("echo('hello');")
-	if recorder.Body.String() != "hello" {
-		t.FailNow()
-	}
-}
 var logTests = []struct {
 	script   string
 	expected string

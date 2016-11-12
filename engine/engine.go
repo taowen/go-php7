@@ -18,7 +18,6 @@ import (
 	"io"
 	"strings"
 	"unsafe"
-	"bytes"
 	"errors"
 	"strconv"
 	"path/filepath"
@@ -121,7 +120,10 @@ func (e *Engine) RequestStartup(ctx *Context) error {
 	// Store reference to context, using pointer as key.
 	e.contexts[ptr] = ctx
 	if ctx.ResponseWriter != nil {
-		ctx.Output = &bytes.Buffer{}
+		if ctx.Output != nil {
+			return errors.New("can not set Output when ResponseWriter is specified")
+		}
+		ctx.Output = ctx.ResponseWriter
 	}
 	_, err = C.context_startup(ptr)
 	if err != nil {
@@ -351,4 +353,17 @@ func engineReadPost(ctx *C.struct__engine_context, buffer unsafe.Pointer, length
 		return -1
 	}
 	return C.int(readBytesCount)
+}
+
+//export engineSendHeaders
+func engineSendHeaders(ctx *C.struct__engine_context, httpResponseCode_ C.int) {
+	context := engine.contexts[ctx]
+	if (context == nil || context.ResponseWriter == nil) {
+		return
+	}
+	httpResponseCode := int(httpResponseCode_)
+	if httpResponseCode == 0 {
+		httpResponseCode = 200
+	}
+	context.ResponseWriter.WriteHeader(httpResponseCode)
 }

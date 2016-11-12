@@ -54,8 +54,13 @@ static int engine_header_handler(sapi_header_struct *sapi_header, sapi_header_op
 	return 0;
 }
 
-static void engine_send_header(sapi_header_struct *sapi_header, void *server_context) {
-	// Do nothing.
+static int engine_send_headers(sapi_headers_struct *sapi_headers) {
+	if (SG(request_info).no_headers == 1) {
+    		return  SAPI_HEADER_SENT_SUCCESSFULLY;
+	}
+	engine_context *context = SG(server_context);
+	engineSendHeaders(context, SG(sapi_headers).http_response_code);
+	return  SAPI_HEADER_SENT_SUCCESSFULLY;
 }
 
 static size_t engine_read_post(char *buffer, size_t count_bytes) {
@@ -119,8 +124,8 @@ static sapi_module_struct engine_module = {
 	php_error,                   // Error Handler
 
 	engine_header_handler,       // Header Handler
-	NULL,                        // Send Headers Handler
-	engine_send_header,          // Send Header Handler
+	engine_send_headers,                        // Send Headers Handler
+	NULL,          // Send Header Handler
 
 	engine_read_post,            // Read POST Data
 	engine_read_cookies,         // Read Cookies
