@@ -80,3 +80,19 @@ func Test_SERVER_HTTP_CONTENT_LENGTH(t *testing.T) {
 		}
 	})
 }
+
+func Test_POST_form_urlencoded(t *testing.T) {
+	body := url.Values{}
+	body.Set("form_arg", "form_value")
+	bodyBytes := body.Encode()
+	req := httptest.NewRequest(http.MethodPost, "/hello", bytes.NewBufferString(bodyBytes))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Content-Length", strconv.Itoa(len(bodyBytes)))
+	evalAssert(&Context{
+		Request: req,
+	}, "return $_POST['form_arg'];", func(val evalAssertionArg) {
+		if ToString(val.val) != "form_value" {
+			t.Fatal(ToString(val.val))
+		}
+	})
+}

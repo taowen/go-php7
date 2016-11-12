@@ -32,7 +32,6 @@ type Context struct {
 	Request *http.Request
 
 	context *C.struct__engine_context
-	serverValues *C.struct__zval_struct
 }
 
 // Bind allows for binding Go values into the current execution context under

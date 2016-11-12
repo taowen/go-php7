@@ -23,6 +23,8 @@ const char engine_ini_defaults[] = {
 	"implicit_flush = 1\n"
 	"output_buffering = 0\n"
 	"max_execution_time = 0\n"
+	"log_errors = 1\n"
+	"error_log = \"/tmp/php-error.log\"\n"
 	"max_input_time = -1\n\0"
 };
 
@@ -55,15 +57,19 @@ static void engine_send_header(sapi_header_struct *sapi_header, void *server_con
 	// Do nothing.
 }
 
+static size_t engine_read_post(char *buffer, size_t count_bytes) {
+	return engineReadPost(SG(server_context), buffer, count_bytes);
+}
+
 static char *engine_read_cookies() {
 	return NULL;
 }
 
 static void engine_register_variables(zval *track_vars_array) {
 	engine_context *context = SG(server_context);
-	if (context->server_values) {
+	if (Z_TYPE(context->server_values) == IS_ARRAY) {
 		zval_dtor(track_vars_array);
-		ZVAL_DUP(track_vars_array, context->server_values);
+		ZVAL_DUP(track_vars_array, &context->server_values);
 	}
 }
 
@@ -94,7 +100,7 @@ static sapi_module_struct engine_module = {
 	NULL,                        // Send Headers Handler
 	engine_send_header,          // Send Header Handler
 
-	NULL,                        // Read POST Data
+	engine_read_post,            // Read POST Data
 	engine_read_cookies,         // Read Cookies
 
 	engine_register_variables,   // Register Server Variables

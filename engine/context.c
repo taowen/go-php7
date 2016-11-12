@@ -21,34 +21,43 @@ engine_context *context_new(zval *server_values) {
 		return NULL;
 	}
 
-	context->server_values = server_values;
 	if (server_values) {
-		zval query_string = value_array_key_get(context->server_values, "QUERY_STRING");
+		zval query_string = value_array_key_get(server_values, "QUERY_STRING");
 		SG(request_info).query_string = Z_STRVAL(query_string);
-		zval_dtor(&query_string);
-		zval request_method = value_array_key_get(context->server_values, "REQUEST_METHOD");
+		context->query_string = query_string;
+		zval request_method = value_array_key_get(server_values, "REQUEST_METHOD");
 		SG(request_info).request_method = Z_STRVAL(request_method);
-		zval_dtor(&request_method);
-		zval content_type = value_array_key_get(context->server_values, "HTTP_CONTENT_TYPE");
+		context->request_method = request_method;
+		zval content_type = value_array_key_get(server_values, "HTTP_CONTENT_TYPE");
 		SG(request_info).content_type = Z_STRVAL(content_type);
-		zval_dtor(&content_type);
-		zval content_length = value_array_key_get(context->server_values, "HTTP_CONTENT_LENGTH");
+		context->content_type = content_type;
+		zval content_length = value_array_key_get(server_values, "HTTP_CONTENT_LENGTH");
 		SG(request_info).content_length = Z_LVAL(content_length);
-		zval_dtor(&content_length);
+		context->server_values = *server_values;
+	} else {
+		ZVAL_NULL(&context->server_values);
 	}
 	SG(server_context) = context;
-
-	// Initialize request lifecycle.
-	if (php_request_startup() == FAILURE) {
-		SG(server_context) = NULL;
-		free(context);
-
-		errno = 1;
-		return NULL;
-	}
-
 	errno = 0;
 	return context;
+}
+
+void context_dtor(engine_context *context) {
+	zval_dtor(&context->server_values);
+	zval_dtor(&context->query_string);
+	zval_dtor(&context->request_method);
+	zval_dtor(&context->content_type);
+}
+
+void context_startup(engine_context *context) {
+	// Initialize request lifecycle.
+	if (php_request_startup() == FAILURE) {
+		context_dtor(context);
+		SG(server_context) = NULL;
+		free(context);
+		errno = 1;
+	}
+	errno = 0;
 }
 
 void context_exec(engine_context *context, char *filename) {
@@ -111,9 +120,7 @@ void context_bind(engine_context *context, char *name, zval *value) {
 }
 
 void context_destroy(engine_context *context) {
-	if (context->server_values) {
-		zval_dtor(context->server_values);
-	}
+	context_dtor(context);
 	php_request_shutdown(NULL);
 
 	SG(server_context) = NULL;
