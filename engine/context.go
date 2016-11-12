@@ -33,6 +33,7 @@ type Context struct {
 
 	// Other variables in $_SERVER
 	DocumentRoot string
+	ScriptFileName string
 
 	context *C.struct__engine_context
 }

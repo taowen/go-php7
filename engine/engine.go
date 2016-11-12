@@ -65,6 +65,7 @@ func (e *Engine) RequestStartup(ctx *Context) error {
 			"QUERY_STRING": ctx.Request.URL.RawQuery,
 			"REQUEST_METHOD": ctx.Request.Method,
 			"DOCUMENT_ROOT": ctx.DocumentRoot,
+			"SCRIPT_FILENAME": ctx.ScriptFileName,
 		}
 		for k, v := range ctx.Request.Header {
 			serverValues_["HTTP_" + strings.Replace(strings.ToUpper(k), "-", "_", -1)] = v[0]
