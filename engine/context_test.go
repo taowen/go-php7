@@ -13,10 +13,9 @@ import (
 )
 
 func TestContextNew(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
+	Initialize()
 	c := &Context{}
-	err := e.RequestStartup(c)
+	err := RequestStartup(c)
 	if err != nil {
 		t.Fatalf("NewContext(): %s", err)
 	}
@@ -25,7 +24,7 @@ func TestContextNew(t *testing.T) {
 		t.Fatalf("NewContext(): Struct fields are `nil` but no error returned")
 	}
 
-	e.RequestShutdown(c)
+	RequestShutdown(c)
 }
 
 var execTests = []struct {
@@ -46,14 +45,13 @@ var execTests = []struct {
 }
 
 func TestContextExec(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
+	Initialize()
 	var w bytes.Buffer
 
 	c := &Context{
 		Output: &w,
 	}
-	e.RequestStartup(c)
+	RequestStartup(c)
 
 	for _, tt := range execTests {
 		script, err := NewScript(tt.name, tt.script)
@@ -77,7 +75,7 @@ func TestContextExec(t *testing.T) {
 		script.Remove()
 	}
 
-	e.RequestShutdown(c)
+	RequestShutdown(c)
 }
 
 var evalTests = []struct {
@@ -98,14 +96,13 @@ var evalTests = []struct {
 }
 
 func TestContextEval(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
+	Initialize()
 	var w bytes.Buffer
 
 	c := &Context{
 		Output: &w,
 	}
-	e.RequestStartup(c)
+	RequestStartup(c)
 
 	for _, tt := range evalTests {
 		val, err := c.Eval(tt.script)
@@ -130,7 +127,7 @@ func TestContextEval(t *testing.T) {
 		DestroyValue(val)
 	}
 
-	e.RequestShutdown(c)
+	RequestShutdown(c)
 }
 
 var logTests = []struct {
@@ -152,14 +149,13 @@ var logTests = []struct {
 }
 
 func TestContextLog(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
+	Initialize()
 	var w bytes.Buffer
 
 	c := &Context{
 		Log: &w,
 	}
-	e.RequestStartup(c)
+	RequestStartup(c)
 
 	for _, tt := range logTests {
 		if _, err := c.Eval(tt.script); err != nil {
@@ -175,7 +171,7 @@ func TestContextLog(t *testing.T) {
 		}
 	}
 
-	e.RequestShutdown(c)
+	RequestShutdown(c)
 }
 
 var bindTests = []struct {
@@ -226,14 +222,13 @@ var bindTests = []struct {
 }
 
 func TestContextBind(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
+	Initialize()
 	var w bytes.Buffer
 
 	c := &Context{
 		Output: &w,
 	}
-	e.RequestStartup(c)
+	RequestStartup(c)
 
 	for i, tt := range bindTests {
 		if err := c.Bind(fmt.Sprintf("t%d", i), tt.value); err != nil {
@@ -254,21 +249,20 @@ func TestContextBind(t *testing.T) {
 		}
 	}
 
-	e.RequestShutdown(c)
+	RequestShutdown(c)
 }
 
 func TestContextDestroy(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
+	Initialize()
 	c := &Context{}
-	e.RequestStartup(c)
-	e.RequestShutdown(c)
+	RequestStartup(c)
+	RequestShutdown(c)
 
 	if c.context != nil {
 		t.Errorf("Context.Destroy(): Did not set internal fields to `nil`")
 	}
 
 	// Attempting to destroy a context twice should be a no-op.
-	e.RequestShutdown(c)
+	RequestShutdown(c)
 }
 

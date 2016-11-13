@@ -103,17 +103,13 @@ type evalAssertionArg struct {
 type evalAssertion func(val evalAssertionArg)
 
 func evalAssert(ctx *Context, script string, assertion evalAssertion) {
-	theEngine, err := New()
-	if err != nil {
-		panic(err)
-	}
-	defer theEngine.Destroy()
+	Initialize()
 	ctx.Output = os.Stdout
-	err = engine.RequestStartup(ctx)
+	err := RequestStartup(ctx)
 	if err != nil {
 		panic(err)
 	}
-	defer engine.RequestShutdown(ctx)
+	defer RequestShutdown(ctx)
 	val, err := ctx.Eval(script)
 	if err != nil {
 		panic(err)

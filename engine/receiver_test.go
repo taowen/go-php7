@@ -115,22 +115,22 @@ var receiverDefineTests = []struct {
 }
 
 func TestReceiverDefine(t *testing.T) {
-	e, _ := New()
+	Initialize()
 	var w bytes.Buffer
 
 	c := &Context{
 		Output: &w,
 	}
-	e.RequestStartup(c)
-	defer e.RequestShutdown(c)
+	RequestStartup(c)
+	defer RequestShutdown(c)
 
-	if err := e.Define("TestReceiver", newTestReceiver); err != nil {
-		t.Fatalf("Engine.Define(): Failed to define method receiver: %s", err)
+	if err := Define("TestReceiver", newTestReceiver); err != nil {
+		t.Fatalf("EnginDefine(): Failed to define method receiver: %s", err)
 	}
 
 	// Attempting to define a receiver twice should fail.
-	if err := e.Define("TestReceiver", newTestReceiver); err == nil {
-		t.Fatalf("Engine.Define(): Defining duplicate receiver should fail")
+	if err := Define("TestReceiver", newTestReceiver); err == nil {
+		t.Fatalf("EnginDefine(): Defining duplicate receiver should fail")
 	}
 
 	for _, tt := range receiverDefineTests {
@@ -147,17 +147,15 @@ func TestReceiverDefine(t *testing.T) {
 			t.Errorf("Context.Eval('%s'): Expected output '%s', actual '%s'", tt.script, tt.expected, actual)
 		}
 	}
-	e.Destroy()
 }
 
 func TestReceiverDestroy(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
+	Initialize()
 	c := &Context{}
-	e.RequestStartup(c)
-	defer e.RequestShutdown(c)
+	RequestStartup(c)
+	defer RequestShutdown(c)
 
-	r := e.receivers["TestReceiver"]
+	r := engine.receivers["TestReceiver"]
 	if r == nil {
 		t.Fatalf("Receiver.Destroy(): Could not find defined receiver")
 	}

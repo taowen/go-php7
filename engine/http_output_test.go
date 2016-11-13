@@ -9,11 +9,10 @@ import (
 )
 
 func Test_finish_request(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
+	Initialize()
 	c := &Context{}
-	e.RequestStartup(c)
-	defer e.RequestShutdown(c)
+	RequestStartup(c)
+	defer RequestShutdown(c)
 	buffer := &bytes.Buffer{}
 	c.Output = buffer
 	c.Eval("ob_start(); echo ('hello');")
@@ -34,11 +33,10 @@ func Test_finish_request(t *testing.T) {
 }
 
 func Test_finish_request_from_php(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
+	Initialize()
 	c := &Context{}
-	e.RequestStartup(c)
-	defer e.RequestShutdown(c)
+	RequestStartup(c)
+	defer RequestShutdown(c)
 	buffer := &bytes.Buffer{}
 	c.Output = buffer
 	c.Eval("ob_start(); echo ('hello');")
@@ -76,14 +74,13 @@ var headerTests = []struct {
 }
 
 func Test_write_header_but_do_not_send(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
+	Initialize()
 	recorder := httptest.NewRecorder()
 	recorder.Code = 0
 	c := &Context{
 		ResponseWriter: recorder,
 	}
-	e.RequestStartup(c)
+	RequestStartup(c)
 
 	for _, tt := range headerTests {
 		if _, err := c.Eval(tt.script); err != nil {
@@ -99,19 +96,18 @@ func Test_write_header_but_do_not_send(t *testing.T) {
 		t.FailNow()
 	}
 
-	e.RequestShutdown(c)
+	RequestShutdown(c)
 }
 
 func Test_send_200_by_default(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
+	Initialize()
 	recorder := httptest.NewRecorder()
 	recorder.Code = 0
 	c := &Context{
 		ResponseWriter: recorder,
 	}
-	e.RequestStartup(c)
-	defer e.RequestShutdown(c)
+	RequestStartup(c)
+	defer RequestShutdown(c)
 	c.FinishRequest()
 	if recorder.Code != 200 {
 		t.FailNow()
@@ -119,15 +115,14 @@ func Test_send_200_by_default(t *testing.T) {
 }
 
 func Test_send_specified_status_code(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
+	Initialize()
 	recorder := httptest.NewRecorder()
 	recorder.Code = 0
 	c := &Context{
 		ResponseWriter: recorder,
 	}
-	e.RequestStartup(c)
-	defer e.RequestShutdown(c)
+	RequestStartup(c)
+	defer RequestShutdown(c)
 	c.Eval("http_response_code(400);")
 	c.FinishRequest()
 	if recorder.Code != 400 {
@@ -136,14 +131,13 @@ func Test_send_specified_status_code(t *testing.T) {
 }
 
 func Test_echo_to_http_response(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
+	Initialize()
 	recorder := httptest.NewRecorder()
 	c := &Context{
 		ResponseWriter: recorder,
 	}
-	e.RequestStartup(c)
-	defer e.RequestShutdown(c)
+	RequestStartup(c)
+	defer RequestShutdown(c)
 	c.Eval("echo('hello');")
 	if recorder.Body.String() != "hello" {
 		t.FailNow()
@@ -151,14 +145,13 @@ func Test_echo_to_http_response(t *testing.T) {
 }
 
 func Test_echo_will_send_response_code(t *testing.T) {
-	e, _ := New()
-	defer e.Destroy()
+	Initialize()
 	recorder := httptest.NewRecorder()
 	c := &Context{
 		ResponseWriter: recorder,
 	}
-	e.RequestStartup(c)
-	defer e.RequestShutdown(c)
+	RequestStartup(c)
+	defer RequestShutdown(c)
 	c.Eval("http_response_code(400); echo('hello');")
 	if recorder.Code != 400 {
 		t.FailNow()

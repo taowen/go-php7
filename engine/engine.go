@@ -36,9 +36,9 @@ var PHP_INI_PATH_OVERRIDE string
 
 // New initializes a PHP engine instance on which contexts can be executed. It
 // corresponds to PHP's MINIT (module init) phase.
-func New() (*Engine, error) {
+func Initialize() error {
 	if engine != nil {
-		return nil, fmt.Errorf("Cannot activate multiple engine instances")
+		return fmt.Errorf("Cannot activate multiple engine instances")
 	}
 
 	var phpInitPathOverride *C.char
@@ -47,7 +47,7 @@ func New() (*Engine, error) {
 	}
 	ptr, err := C.engine_init(phpInitPathOverride)
 	if err != nil {
-		return nil, fmt.Errorf("PHP engine failed to initialize")
+		return fmt.Errorf("PHP engine failed to initialize")
 	}
 
 	engine = &Engine{
@@ -56,13 +56,13 @@ func New() (*Engine, error) {
 		receivers: make(map[string]*Receiver),
 	}
 
-	return engine, nil
+	return nil
 }
 
 // NewContext creates a new execution context for the active engine and returns
 // an error if the execution context failed to initialize at any point. This
 // corresponds to PHP's RINIT (request init) phase.
-func (e *Engine) RequestStartup(ctx *Context) error {
+func RequestStartup(ctx *Context) error {
 	var serverValues *C.struct__zval_struct
 	if ctx.Request != nil {
 		scriptName, err := filepath.Rel(ctx.DocumentRoot, ctx.ScriptFileName)
@@ -123,7 +123,7 @@ func (e *Engine) RequestStartup(ctx *Context) error {
 	// passed serverValues ownership to context
 	ctx.context = ptr
 	// Store reference to context, using pointer as key.
-	e.contexts[ptr] = ctx
+	engine.contexts[ptr] = ctx
 	if ctx.ResponseWriter != nil {
 		if ctx.Output != nil {
 			return errors.New("can not set Output when ResponseWriter is specified")
@@ -139,11 +139,11 @@ func (e *Engine) RequestStartup(ctx *Context) error {
 
 // Destroy tears down the current execution context
 // corresponds to PHP's RSHUTDOWN phase
-func (e *Engine) RequestShutdown(ctx *Context) {
+func RequestShutdown(ctx *Context) {
 	if ctx.context == nil {
 		return
 	}
-	delete(e.contexts, ctx.context)
+	delete(engine.contexts, ctx.context)
 	C.context_destroy(ctx.context)
 	ctx.context = nil
 }
@@ -156,8 +156,8 @@ func (e *Engine) RequestShutdown(ctx *Context) {
 // The constructor function accepts a slice of arguments, as passed by the PHP
 // context, and should return a method receiver instance, or nil on error (in
 // which case, an exception is thrown on the PHP object constructor).
-func (e *Engine) Define(name string, fn func(args []interface{}) interface{}) error {
-	if _, exists := e.receivers[name]; exists {
+func Define(name string, fn func(args []interface{}) interface{}) error {
+	if _, exists := engine.receivers[name]; exists {
 		return fmt.Errorf("Failed to define duplicate receiver '%s'", name)
 	}
 
@@ -171,36 +171,9 @@ func (e *Engine) Define(name string, fn func(args []interface{}) interface{}) er
 	defer C.free(unsafe.Pointer(n))
 
 	C.receiver_define(n)
-	e.receivers[name] = rcvr
+	engine.receivers[name] = rcvr
 
 	return nil
-}
-
-// Destroy shuts down and frees any resources related to the PHP engine bindings.
-func (e *Engine) Destroy() {
-	if e == nil {
-		return
-	}
-	if e.engine == nil {
-		return
-	}
-
-	for _, r := range e.receivers {
-		r.Destroy()
-	}
-
-	e.receivers = nil
-
-	for _, c := range e.contexts {
-		e.RequestShutdown(c)
-	}
-
-	e.contexts = nil
-
-	C.engine_shutdown(e.engine)
-	e.engine = nil
-
-	engine = nil
 }
 
 func write(w io.Writer, buffer unsafe.Pointer, length C.uint) C.int {

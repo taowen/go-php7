@@ -138,6 +138,8 @@ static sapi_module_struct engine_module = {
 	STANDARD_SAPI_MODULE_PROPERTIES
 };
 
+int start_accel_module(void);
+
 php_engine *engine_init(char *php_ini_path_override) {
 	php_engine *engine;
 
@@ -160,6 +162,8 @@ php_engine *engine_init(char *php_ini_path_override) {
 		errno = 1;
 		return NULL;
 	}
+
+	start_accel_module();
 
 	engine = malloc((sizeof(php_engine)));
 
