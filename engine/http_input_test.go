@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"mime/multipart"
 	"time"
+	"os"
 )
 
 func Test_SERVER_REQUEST_URI(t *testing.T) {
@@ -263,6 +264,18 @@ func Test_SERVER_SERVER_PORT(t *testing.T) {
 		Request: req,
 	}, "return $_SERVER['SERVER_PORT'];", func(val evalAssertionArg) {
 		if ToString(val.val) != "5555" {
+			t.Fatal(ToString(val.val))
+		}
+	})
+}
+
+func Test_environment_variables(t *testing.T) {
+	os.Setenv("HELLO", "WORLD")
+	req := httptest.NewRequest(http.MethodGet, "/hello", nil)
+	evalAssert(&Context{
+		Request: req,
+	}, "return $_SERVER['HELLO'];", func(val evalAssertionArg) {
+		if ToString(val.val) != "WORLD" {
 			t.Fatal(ToString(val.val))
 		}
 	})

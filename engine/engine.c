@@ -83,6 +83,7 @@ static void engine_register_variables(zval *track_vars_array) {
 	if (Z_TYPE(context->server_values) == IS_ARRAY) {
 		zval_dtor(track_vars_array);
 		ZVAL_DUP(track_vars_array, &context->server_values);
+		php_import_environment_variables(track_vars_array);
 	}
 }
 
@@ -172,10 +173,8 @@ php_engine *engine_init(char *php_ini_path_override) {
 
     if (accel_extension->startup) {
         if (accel_extension->startup(accel_extension) != SUCCESS) {
-            sapi_shutdown();
-
-            errno = 1;
-            return NULL;
+            printf("opcache load failed\n");
+            fflush(stdout);
         }
         zend_append_version_info(accel_extension);
     }
