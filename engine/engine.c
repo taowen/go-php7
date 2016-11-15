@@ -9,6 +9,7 @@
 #include <main/SAPI.h>
 #include <main/php_main.h>
 #include <main/php_variables.h>
+#include <Zend/zend_extensions.h>
 
 #include "context.h"
 #include "engine.h"
@@ -23,7 +24,9 @@ const char engine_ini_defaults[] = {
 	"implicit_flush = 1\n"
 	"output_buffering = 0\n"
 	"max_execution_time = 0\n"
+	"opcache.enable = 1\n"
 	"log_errors = 1\n"
+	"error_reporting = E_ALL\n"
 	"error_log = \"/tmp/php-error.log\"\n"
 	"max_input_time = -1\n\0"
 };
@@ -107,7 +110,7 @@ static const zend_function_entry engine_sapi_functions[] = {
 };
 
 static sapi_module_struct engine_module = {
-	"gophp-engine",              // Name
+	"fpm-fcgi",              // Name
 	"Go PHP Engine Library",     // Pretty Name
 
 	NULL,                        // Startup
@@ -138,7 +141,7 @@ static sapi_module_struct engine_module = {
 	STANDARD_SAPI_MODULE_PROPERTIES
 };
 
-int start_accel_module(void);
+zend_extension *get_accel_zend_extension(void);
 
 php_engine *engine_init(char *php_ini_path_override) {
 	php_engine *engine;
@@ -163,7 +166,19 @@ php_engine *engine_init(char *php_ini_path_override) {
 		return NULL;
 	}
 
-	start_accel_module();
+	zend_extension *accel_extension = get_accel_zend_extension();
+
+	zend_register_extension(accel_extension, NULL);
+
+    if (accel_extension->startup) {
+        if (accel_extension->startup(accel_extension) != SUCCESS) {
+            sapi_shutdown();
+
+            errno = 1;
+            return NULL;
+        }
+        zend_append_version_info(accel_extension);
+    }
 
 	engine = malloc((sizeof(php_engine)));
 

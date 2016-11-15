@@ -38,6 +38,10 @@ engine_context *context_new(zval *server_values) {
 		context->http_cookie = value_array_key_get(server_values, "HTTP_COOKIE");
 	} else {
 		ZVAL_NULL(&context->server_values);
+		ZVAL_NULL(&context->query_string);
+		ZVAL_NULL(&context->request_method);
+		ZVAL_NULL(&context->content_type);
+		ZVAL_NULL(&context->http_cookie);
 	}
 	SG(server_context) = context;
 	errno = 0;
