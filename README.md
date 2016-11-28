@@ -1,5 +1,7 @@
 Original library is at: https://github.com/deuill/go-php
 
+中文文档：https://segmentfault.com/a/1190000007619087
+
 This fork is for:
 
 * Support PHP7 only, so that we can embrace the value semantics of zval
