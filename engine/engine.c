@@ -142,7 +142,7 @@ static sapi_module_struct engine_module = {
 	STANDARD_SAPI_MODULE_PROPERTIES
 };
 
-zend_extension *get_accel_zend_extension(void);
+//zend_extension *get_accel_zend_extension(void);
 
 php_engine *engine_init(char *php_ini_path_override) {
 	php_engine *engine;
@@ -167,17 +167,17 @@ php_engine *engine_init(char *php_ini_path_override) {
 		return NULL;
 	}
 
-	zend_extension *accel_extension = get_accel_zend_extension();
+	//zend_extension *accel_extension = get_accel_zend_extension();
 
-	zend_register_extension(accel_extension, NULL);
+	//zend_register_extension(accel_extension, NULL);
 
-    if (accel_extension->startup) {
-        if (accel_extension->startup(accel_extension) != SUCCESS) {
-            printf("opcache load failed\n");
-            fflush(stdout);
-        }
-        zend_append_version_info(accel_extension);
-    }
+    //if (accel_extension->startup) {
+    //    if (accel_extension->startup(accel_extension) != SUCCESS) {
+    //        printf("opcache load failed\n");
+    //        fflush(stdout);
+    //    }
+    //    zend_append_version_info(accel_extension);
+    //}
 
 	engine = malloc((sizeof(php_engine)));
 
